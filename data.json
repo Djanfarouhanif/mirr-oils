@@ -1,0 +1,728 @@
+{
+  "meta": {
+    "version": "1.0",
+    "app": "Mirr Oils",
+    "lastSaved": "2026-06-16T21:07:03.456Z"
+  },
+  "objectifs": {
+    "caM": 12000000,
+    "caH": 3000000,
+    "depMax": 250000
+  },
+  "categories": [
+    "Carburant vehicule",
+    "Lavage vehicule",
+    "Electricite / charges",
+    "Fournitures bureau",
+    "Maintenance",
+    "Autre"
+  ],
+  "sales": [
+    {
+      "id": 201,
+      "date": "2026-06-16",
+      "prod": "10W40 (4x4L)",
+      "qty": 22,
+      "priceType": "grossiste",
+      "unitPrice": 12000,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 264000,
+      "note": ""
+    },
+    {
+      "id": 200,
+      "date": "2026-06-16",
+      "prod": "XDEO SAE 50 Fut 200L",
+      "qty": 0.5,
+      "priceType": "mecanicien",
+      "unitPrice": 355000,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 177500,
+      "note": ""
+    },
+    {
+      "id": 1,
+      "date": "2026-06-08",
+      "prod": "Coolant 33% (4x4L)",
+      "qty": 1,
+      "priceType": "client",
+      "unitPrice": 23000,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 23000,
+      "note": ""
+    },
+    {
+      "id": 2,
+      "date": "2026-06-08",
+      "prod": "5W30 (4x5L)",
+      "qty": 2,
+      "priceType": "client",
+      "unitPrice": 21000,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 42000,
+      "note": ""
+    },
+    {
+      "id": 3,
+      "date": "2026-06-08",
+      "prod": "10W40 (4x4L)",
+      "qty": 2,
+      "priceType": "client",
+      "unitPrice": 13200,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 26400,
+      "note": ""
+    },
+    {
+      "id": 4,
+      "date": "2026-06-08",
+      "prod": "T-cross 4T (12x1L)",
+      "qty": 5,
+      "priceType": "client",
+      "unitPrice": 13800,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 69000,
+      "note": ""
+    },
+    {
+      "id": 5,
+      "date": "2026-06-08",
+      "prod": "XDEO SAE 15W40 (4x5L)",
+      "qty": 1,
+      "priceType": "client",
+      "unitPrice": 12500,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 12500,
+      "note": ""
+    },
+    {
+      "id": 6,
+      "date": "2026-06-08",
+      "prod": "XDEO SAE 50 (4x5L)",
+      "qty": 3,
+      "priceType": "client",
+      "unitPrice": 26400,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 79200,
+      "note": ""
+    },
+    {
+      "id": 7,
+      "date": "2026-06-08",
+      "prod": "XDEO SAE 50 Seau 20L",
+      "qty": 2,
+      "priceType": "grossiste",
+      "unitPrice": 48500,
+      "remise": 0,
+      "clientName": "GDM Sarl",
+      "amount": 97000,
+      "note": ""
+    },
+    {
+      "id": 8,
+      "date": "2026-06-08",
+      "prod": "Vrac T-cross (par litre)",
+      "qty": 5,
+      "priceType": "client",
+      "unitPrice": 2500,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 12500,
+      "note": ""
+    },
+    {
+      "id": 9,
+      "date": "2026-06-08",
+      "prod": "Reglement client",
+      "qty": 1,
+      "priceType": "client",
+      "unitPrice": 30000,
+      "remise": 0,
+      "clientName": "GDM Sarl",
+      "amount": 30000,
+      "note": "Reglement partiel"
+    },
+    {
+      "id": 10,
+      "date": "2026-06-09",
+      "prod": "15W40 Alma Super (4x5L)",
+      "qty": 3,
+      "priceType": "client",
+      "unitPrice": 15000,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 45000,
+      "note": ""
+    },
+    {
+      "id": 11,
+      "date": "2026-06-09",
+      "prod": "Brake Fluid DOT III 500mL",
+      "qty": 1,
+      "priceType": "client",
+      "unitPrice": 2500,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 2500,
+      "note": ""
+    },
+    {
+      "id": 12,
+      "date": "2026-06-09",
+      "prod": "XDEO SAE 20W50 (4x5L)",
+      "qty": 1,
+      "priceType": "client",
+      "unitPrice": 12500,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 12500,
+      "note": ""
+    },
+    {
+      "id": 13,
+      "date": "2026-06-09",
+      "prod": "10W40 (4x4L)",
+      "qty": 4,
+      "priceType": "client",
+      "unitPrice": 14000,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 56000,
+      "note": ""
+    },
+    {
+      "id": 14,
+      "date": "2026-06-09",
+      "prod": "T-cross 4T (12x1L)",
+      "qty": 2,
+      "priceType": "client",
+      "unitPrice": 16500,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 33000,
+      "note": ""
+    },
+    {
+      "id": 15,
+      "date": "2026-06-09",
+      "prod": "Vrac T-cross (par litre)",
+      "qty": 3,
+      "priceType": "client",
+      "unitPrice": 2500,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 7500,
+      "note": ""
+    },
+    {
+      "id": 16,
+      "date": "2026-06-09",
+      "prod": "Reglement client",
+      "qty": 1,
+      "priceType": "client",
+      "unitPrice": 160000,
+      "remise": 0,
+      "clientName": "GDM Sarl",
+      "amount": 160000,
+      "note": ""
+    },
+    {
+      "id": 17,
+      "date": "2026-06-10",
+      "prod": "XDEO SAE 50 Fut 200L",
+      "qty": 8,
+      "priceType": "grossiste",
+      "unitPrice": 370000,
+      "remise": 0,
+      "clientName": "GDM Sarl",
+      "amount": 2960000,
+      "note": "Commande importante"
+    },
+    {
+      "id": 18,
+      "date": "2026-06-10",
+      "prod": "Vrac T-cross (par litre)",
+      "qty": 4,
+      "priceType": "client",
+      "unitPrice": 2500,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 10000,
+      "note": ""
+    },
+    {
+      "id": 19,
+      "date": "2026-06-11",
+      "prod": "5W30 (4x5L)",
+      "qty": 1,
+      "priceType": "client",
+      "unitPrice": 22000,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 22000,
+      "note": ""
+    },
+    {
+      "id": 20,
+      "date": "2026-06-11",
+      "prod": "T-cross 4T (12x1L)",
+      "qty": 1,
+      "priceType": "client",
+      "unitPrice": 26400,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 26400,
+      "note": ""
+    },
+    {
+      "id": 21,
+      "date": "2026-06-12",
+      "prod": "Vrac T-cross (par litre)",
+      "qty": 4,
+      "priceType": "client",
+      "unitPrice": 2500,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 10000,
+      "note": ""
+    },
+    {
+      "id": 22,
+      "date": "2026-06-02",
+      "prod": "T-cross 4T (12x1L)",
+      "qty": 5,
+      "priceType": "client",
+      "unitPrice": 26400,
+      "remise": 4000,
+      "clientName": "--",
+      "amount": 128000,
+      "note": ""
+    },
+    {
+      "id": 23,
+      "date": "2026-06-02",
+      "prod": "XDEO SAE 50 (4x5L)",
+      "qty": 3,
+      "priceType": "client",
+      "unitPrice": 22000,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 66000,
+      "note": ""
+    },
+    {
+      "id": 24,
+      "date": "2026-06-03",
+      "prod": "5W30 (4x5L)",
+      "qty": 4,
+      "priceType": "client",
+      "unitPrice": 22000,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 88000,
+      "note": ""
+    },
+    {
+      "id": 25,
+      "date": "2026-06-04",
+      "prod": "XDEO SAE 50 Seau 20L",
+      "qty": 4,
+      "priceType": "grossiste",
+      "unitPrice": 43000,
+      "remise": 0,
+      "clientName": "GDM Sarl",
+      "amount": 172000,
+      "note": ""
+    },
+    {
+      "id": 26,
+      "date": "2026-06-05",
+      "prod": "10W40 (4x4L)",
+      "qty": 4,
+      "priceType": "client",
+      "unitPrice": 14000,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 56000,
+      "note": ""
+    },
+    {
+      "id": 27,
+      "date": "2026-06-16",
+      "prod": "T-cross 4T (12x1L)",
+      "qty": 4,
+      "priceType": "client",
+      "unitPrice": 26400,
+      "remise": 3000,
+      "clientName": "--",
+      "amount": 102720,
+      "note": ""
+    },
+    {
+      "id": 28,
+      "date": "2026-06-17",
+      "prod": "5W30 (4x5L)",
+      "qty": 2,
+      "priceType": "client",
+      "unitPrice": 22000,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 44000,
+      "note": ""
+    },
+    {
+      "id": 29,
+      "date": "2026-06-18",
+      "prod": "XDEO SAE 50 (4x5L)",
+      "qty": 2,
+      "priceType": "client",
+      "unitPrice": 22000,
+      "remise": 4400,
+      "clientName": "--",
+      "amount": 39600,
+      "note": ""
+    },
+    {
+      "id": 30,
+      "date": "2026-06-23",
+      "prod": "XDEO SAE 50 Fut 200L",
+      "qty": 1,
+      "priceType": "grossiste",
+      "unitPrice": 370000,
+      "remise": 0,
+      "clientName": "GDM Sarl",
+      "amount": 370000,
+      "note": ""
+    },
+    {
+      "id": 31,
+      "date": "2026-06-24",
+      "prod": "T-cross 4T (12x1L)",
+      "qty": 5,
+      "priceType": "client",
+      "unitPrice": 26400,
+      "remise": 3600,
+      "clientName": "--",
+      "amount": 128400,
+      "note": ""
+    },
+    {
+      "id": 32,
+      "date": "2026-06-25",
+      "prod": "XDEO SAE 50 Seau 20L",
+      "qty": 2,
+      "priceType": "client",
+      "unitPrice": 48500,
+      "remise": 0,
+      "clientName": "--",
+      "amount": 97000,
+      "note": ""
+    }
+  ],
+  "depenses": [
+    {
+      "id": 1,
+      "date": "2026-06-08",
+      "cat": "Carburant vehicule",
+      "desig": "Carburant voiture",
+      "amount": 33000,
+      "note": ""
+    },
+    {
+      "id": 2,
+      "date": "2026-06-08",
+      "cat": "Lavage vehicule",
+      "desig": "Lavage voiture",
+      "amount": 2000,
+      "note": ""
+    },
+    {
+      "id": 3,
+      "date": "2026-06-12",
+      "cat": "Electricite / charges",
+      "desig": "Achat electricite AICED",
+      "amount": 30000,
+      "note": ""
+    },
+    {
+      "id": 4,
+      "date": "2026-06-02",
+      "cat": "Carburant vehicule",
+      "desig": "Carburant livraison",
+      "amount": 25000,
+      "note": ""
+    },
+    {
+      "id": 5,
+      "date": "2026-06-05",
+      "cat": "Electricite / charges",
+      "desig": "Facture electricite",
+      "amount": 20000,
+      "note": ""
+    },
+    {
+      "id": 6,
+      "date": "2026-06-05",
+      "cat": "Lavage vehicule",
+      "desig": "Lavage",
+      "amount": 3000,
+      "note": ""
+    },
+    {
+      "id": 7,
+      "date": "2026-06-16",
+      "cat": "Carburant vehicule",
+      "desig": "Carburant",
+      "amount": 20000,
+      "note": ""
+    },
+    {
+      "id": 8,
+      "date": "2026-06-18",
+      "cat": "Electricite / charges",
+      "desig": "Electricite",
+      "amount": 12000,
+      "note": ""
+    },
+    {
+      "id": 9,
+      "date": "2026-06-20",
+      "cat": "Lavage vehicule",
+      "desig": "Lavage voiture",
+      "amount": 2000,
+      "note": ""
+    },
+    {
+      "id": 10,
+      "date": "2026-06-20",
+      "cat": "Fournitures bureau",
+      "desig": "Ramettes papier",
+      "amount": 8000,
+      "note": ""
+    },
+    {
+      "id": 11,
+      "date": "2026-06-23",
+      "cat": "Carburant vehicule",
+      "desig": "Carburant",
+      "amount": 30000,
+      "note": ""
+    },
+    {
+      "id": 12,
+      "date": "2026-06-25",
+      "cat": "Electricite / charges",
+      "desig": "Electricite",
+      "amount": 22000,
+      "note": ""
+    },
+    {
+      "id": 13,
+      "date": "2026-06-27",
+      "cat": "Lavage vehicule",
+      "desig": "Lavage",
+      "amount": 3000,
+      "note": ""
+    }
+  ],
+  "clients": [
+    {
+      "id": 1,
+      "name": "GDM Sarl",
+      "cat": "grossiste",
+      "phone": "+228 90 00 11 22",
+      "email": "contact@gdm.tg",
+      "addr": "Lome, Agbalepedogan",
+      "priceType": "grossiste",
+      "solde": 190000,
+      "note": "Grossiste principal"
+    },
+    {
+      "id": 2,
+      "name": "Essi Kofi",
+      "cat": "client",
+      "phone": "+228 91 23 45 67",
+      "email": "",
+      "addr": "Lome, Hedzranawoe",
+      "priceType": "client",
+      "solde": 0,
+      "note": ""
+    },
+    {
+      "id": 3,
+      "name": "Garage Auto Pro",
+      "cat": "mecanicien",
+      "phone": "+228 99 87 65 43",
+      "email": "",
+      "addr": "Lome, Adidogome",
+      "priceType": "mecanicien",
+      "solde": 0,
+      "note": "Garage partenaire"
+    },
+    {
+      "id": 4,
+      "name": "Dosseh Rene",
+      "cat": "coursier",
+      "phone": "+228 92 11 33 55",
+      "email": "",
+      "addr": "Lome, Be",
+      "priceType": "client",
+      "solde": 0,
+      "note": "Coursier livraison"
+    }
+  ],
+  "produits": [
+    {
+      "id": 1,
+      "name": "XDEO SAE 50 Fut 200L",
+      "cond": "Fut 200L",
+      "pc": 370000,
+      "pm": 355000,
+      "pg": 340000,
+      "unit": "fut",
+      "stock": 12,
+      "alerte": 2
+    },
+    {
+      "id": 2,
+      "name": "T-cross 4T (12x1L)",
+      "cond": "Carton 12x1L",
+      "pc": 26400,
+      "pm": 25000,
+      "pg": 23500,
+      "unit": "carton",
+      "stock": 20,
+      "alerte": 5
+    },
+    {
+      "id": 3,
+      "name": "XDEO SAE 50 Seau 20L",
+      "cond": "Seau 20L",
+      "pc": 48500,
+      "pm": 46000,
+      "pg": 43000,
+      "unit": "seau",
+      "stock": 15,
+      "alerte": 3
+    },
+    {
+      "id": 4,
+      "name": "5W30 (4x5L)",
+      "cond": "Carton 4x5L",
+      "pc": 22000,
+      "pm": 21000,
+      "pg": 19500,
+      "unit": "carton",
+      "stock": 3,
+      "alerte": 5
+    },
+    {
+      "id": 5,
+      "name": "10W40 (4x4L)",
+      "cond": "Carton 4x4L",
+      "pc": 14000,
+      "pm": 13200,
+      "pg": 12000,
+      "unit": "carton",
+      "stock": 8,
+      "alerte": 5
+    },
+    {
+      "id": 6,
+      "name": "Vrac T-cross (par litre)",
+      "cond": "Litre",
+      "pc": 2500,
+      "pm": 2300,
+      "pg": 2000,
+      "unit": "litre",
+      "stock": 50,
+      "alerte": 10
+    },
+    {
+      "id": 7,
+      "name": "Coolant 33% (4x4L)",
+      "cond": "Carton 4x4L",
+      "pc": 23000,
+      "pm": 21500,
+      "pg": 20000,
+      "unit": "carton",
+      "stock": 7,
+      "alerte": 3
+    },
+    {
+      "id": 8,
+      "name": "Brake Fluid DOT III 500mL",
+      "cond": "Bouteille 500mL",
+      "pc": 2500,
+      "pm": 2200,
+      "pg": 1800,
+      "unit": "bouteille",
+      "stock": 0,
+      "alerte": 5
+    },
+    {
+      "id": 9,
+      "name": "XDEO SAE 15W40 (4x5L)",
+      "cond": "Carton 4x5L",
+      "pc": 12500,
+      "pm": 11800,
+      "pg": 10500,
+      "unit": "carton",
+      "stock": 10,
+      "alerte": 3
+    },
+    {
+      "id": 10,
+      "name": "XDEO SAE 20W50 (4x5L)",
+      "cond": "Carton 4x5L",
+      "pc": 22000,
+      "pm": 21000,
+      "pg": 19000,
+      "unit": "carton",
+      "stock": 6,
+      "alerte": 3
+    },
+    {
+      "id": 11,
+      "name": "15W40 Alma Super (4x5L)",
+      "cond": "Carton 4x5L",
+      "pc": 15000,
+      "pm": 14000,
+      "pg": 12500,
+      "unit": "carton",
+      "stock": 9,
+      "alerte": 3
+    },
+    {
+      "id": 12,
+      "name": "Turbo CH-4 SAE 15W40 (6x5L)",
+      "cond": "Carton 6x5L",
+      "pc": 20000,
+      "pm": 19000,
+      "pg": 17500,
+      "unit": "carton",
+      "stock": 5,
+      "alerte": 3
+    },
+    {
+      "id": 13,
+      "name": "Reglement client",
+      "cond": "--",
+      "pc": 0,
+      "pm": 0,
+      "pg": 0,
+      "unit": "--",
+      "stock": 999,
+      "alerte": 0
+    }
+  ],
+  "nextId": 202
+}
