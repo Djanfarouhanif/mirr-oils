@@ -335,7 +335,7 @@ function fillPrice() {
   if(prod) {
     const price=getP(prod,pt);
     document.getElementById('vUnitPrice').value=price||'';
-    document.getElementById('vUnitHint').textContent=prod.cond?'Unite: '+prod.cond:'';
+    document.getElementById('vUnitHint').textContent=(prod.cond?'Unite: '+prod.cond+' — ':'')+'Stock dispo: '+(prod.stock||0);
     document.getElementById('vPriceHint').textContent=`C:${fmt(prod.pc)} | M:${fmt(prod.pm)} | G:${fmt(prod.pg)}`;
   } else {
     document.getElementById('vUnitHint').textContent='';
@@ -382,7 +382,21 @@ function saveSale() {
   const amt=parseFloat(document.getElementById('vAmount').value)||0;
   const cli=document.getElementById('vClientName').value||document.getElementById('vClient').value||'--';
   const note=document.getElementById('vNote').value;
-  if(!prod||!amt){toast('Produit et montant obligatoires','error');return;}
+  if(!prod||!amt){toast('Produit et montant obligatoires','error');return false;}
+
+  // Contrôle de stock : interdit de vendre plus que le stock disponible
+  const prodObj=window.DB.produits.find(p=>p.name===prod);
+  if(prodObj){
+    let dispo=prodObj.stock||0;
+    if(editingSaleId){
+      const oldS=window.DB.sales.find(s=>s.id===editingSaleId);
+      if(oldS && oldS.prod===prod) dispo+=oldS.qty;   // l'ancienne quantité est déjà déduite du stock
+    }
+    if(qty>dispo){
+      toast(`Stock insuffisant : il reste ${dispo} en stock pour ${prod}`,'error');
+      return false;
+    }
+  }
 
   if(editingSaleId) {
     // UPDATE
@@ -403,6 +417,7 @@ function saveSale() {
     toast('Vente enregistree !','success');
   }
   editingSaleId=null; closeModal('modalVente'); renderSales(); updateSaleStats(); renderProduits(); refreshDashboard();
+  return true;
 }
 
 function saveAndReceipt() {
@@ -414,8 +429,8 @@ function saveAndReceipt() {
   const cli=document.getElementById('vClientName').value||document.getElementById('vClient').value||'--';
   const pt=document.getElementById('vPriceType').value;
   const date=document.getElementById('vDate').value;
-  saveSale();
-  showReceipt({prod,qty,priceType:pt,unitPrice:unit,remise:rem,amount:amt,clientName:cli,date:fmtD(date)});
+  // N'affiche le reçu que si la vente a bien été enregistrée (sinon : stock insuffisant, etc.)
+  if(saveSale()) showReceipt({prod,qty,priceType:pt,unitPrice:unit,remise:rem,amount:amt,clientName:cli,date:fmtD(date)});
 }
 
 function showReceipt(s) {
