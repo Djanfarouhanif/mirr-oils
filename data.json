@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "app": "Mirr Oils",
-    "lastSaved": "2026-06-17T15:17:14.293Z"
+    "lastSaved": "2026-06-17T15:27:09.035Z"
   },
   "objectifs": {
     "caM": 1000000,
@@ -581,6 +581,28 @@
       "priceType": "client",
       "solde": 0,
       "note": "Coursier livraison"
+    },
+    {
+      "id": 227,
+      "name": "DJANFAROU Hanif",
+      "cat": "test",
+      "phone": "+22892971684",
+      "email": "hanifdjanfarou4@gmail.com",
+      "addr": "KARA/Togo",
+      "priceType": "mecanicien",
+      "solde": 0,
+      "note": ""
+    },
+    {
+      "id": 228,
+      "name": "DJANFAROU Hanif",
+      "cat": "karo",
+      "phone": "+22892971684",
+      "email": "hanifdjanfarou4@gmail.com",
+      "addr": "KARA/Togo",
+      "priceType": "mecanicien",
+      "solde": 0,
+      "note": ""
     }
   ],
   "produits": [
@@ -752,7 +774,7 @@
       "photo": ""
     }
   ],
-  "nextId": 227,
+  "nextId": 229,
   "mouvements": [
     {
       "id": 224,
@@ -885,6 +907,27 @@
     {
       "key": "test",
       "label": "test"
+    },
+    {
+      "key": "karo",
+      "label": "karot",
+      "bg": "#26a1c0",
+      "border": "#2379fb",
+      "color": "#e7eaee"
+    },
+    {
+      "key": "alut",
+      "label": "alut",
+      "bg": "#e8f0fe",
+      "border": "#4285f4",
+      "color": "#1a56db"
+    },
+    {
+      "key": "hell",
+      "label": "hell",
+      "bg": "#e8f0fe",
+      "border": "#4285f4",
+      "color": "#1a56db"
     }
   ],
   "priceTypes": [

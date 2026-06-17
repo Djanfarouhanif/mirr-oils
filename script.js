@@ -11,7 +11,15 @@ const ptL  = p => {
   if(f) return f.label;
   return ({client:'Client',mecanicien:'Mecanicien',grossiste:'Grossiste',coursier:'Coursier'}[p]||p);
 };
-const catBadge = c => { const m={client:'b-client',mecanicien:'b-meca',grossiste:'b-grossiste',coursier:'b-coursier'}; return `<span class="badge ${m[c]||'b-default'}">${ptL(c)}</span>`; };
+const catBadge = c => {
+  // Couleurs personnalisées du type (fond/bordure/texte) si définies, sinon classe par défaut
+  const t=[...((window.DB&&DB.clientTypes)||[]),...((window.DB&&DB.priceTypes)||[])].find(x=>x.key===c);
+  if(t && (t.bg||t.border||t.color)){
+    return `<span class="badge" style="background:${t.bg||'transparent'};border:1px solid ${t.border||'transparent'};color:${t.color||'inherit'}">${ptL(c)}</span>`;
+  }
+  const m={client:'b-client',mecanicien:'b-meca',grossiste:'b-grossiste',coursier:'b-coursier'};
+  return `<span class="badge ${m[c]||'b-default'}">${ptL(c)}</span>`;
+};
 const getP = (prod,type) => { if(!prod)return 0; return {client:prod.pc,mecanicien:prod.pm,grossiste:prod.pg}[type]||prod.pc||0; };
 const hexRgba = (h,a) => { const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return `rgba(${r},${g},${b},${a})`; };
 
@@ -762,21 +770,43 @@ function fillTypeSelectors() {
 // ---- CRUD des types ----
 function openTypesModal(){ renderTypesLists(); openModal('modalTypes'); }
 function renderTypesLists(){
-  const row=(kind,t)=>`<div class="flex-between" style="padding:8px 0;border-bottom:1px solid var(--border)"><div class="flex gap-8"><i class="ti ti-tag" style="color:var(--primary)"></i><span>${t.label}</span> <span class="fs-11 text-muted">(${t.key})</span></div><div style="display:flex;gap:4px"><button class="btn btn-xs" onclick="renameType('${kind}','${t.key}')" title="Renommer"><i class="ti ti-edit"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteType('${kind}','${t.key}')" title="Supprimer"><i class="ti ti-trash"></i></button></div></div>`;
+  const row=(kind,t)=>{
+    const bg=t.bg||'#e5e7eb', bd=t.border||'#d1d5db', col=t.color||'#374151';
+    return `<div class="flex-between" style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div class="flex gap-8" style="align-items:center">
+        <span class="badge" style="background:${bg};border:1px solid ${bd};color:${col}">${t.label}</span>
+        <span class="fs-11 text-muted">(${t.key})</span>
+        <input type="color" value="${bg}"  onchange="setTypeColor('${kind}','${t.key}','bg',this.value)"     title="Fond">
+        <input type="color" value="${bd}"  onchange="setTypeColor('${kind}','${t.key}','border',this.value)" title="Bordure">
+        <input type="color" value="${col}" onchange="setTypeColor('${kind}','${t.key}','color',this.value)"  title="Texte">
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-xs" onclick="renameType('${kind}','${t.key}')" title="Renommer"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-xs btn-danger-outline" onclick="deleteType('${kind}','${t.key}')" title="Supprimer"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  };
   document.getElementById('clientTypesList').innerHTML=(window.DB.clientTypes||[]).map(t=>row('client',t)).join('')||'<div class="text-muted fs-12">Aucun</div>';
   document.getElementById('priceTypesList').innerHTML=(window.DB.priceTypes||[]).map(t=>row('price',t)).join('')||'<div class="text-muted fs-12">Aucun</div>';
 }
 function _typeList(kind){ return kind==='client'?window.DB.clientTypes:window.DB.priceTypes; }
-function addClientType(){ _addType('client','newClientType'); }
-function addPriceType(){ _addType('price','newPriceType'); }
-function _addType(kind,inputId){
+/** Met à jour une couleur (bg/border/color) d'un type et rafraîchit les badges. */
+function setTypeColor(kind,key,field,value){
+  const t=_typeList(kind).find(x=>x.key===key); if(!t)return;
+  t[field]=value;
+  _syncAndSave(); renderTypesLists(); renderClients();
+}
+function addClientType(){ _addType('client','newClientType','newClientTypeBg','newClientTypeBorder','newClientTypeColor'); }
+function addPriceType(){ _addType('price','newPriceType','newPriceTypeBg','newPriceTypeBorder','newPriceTypeColor'); }
+function _addType(kind,inputId,bgId,borderId,colorId){
   const inp=document.getElementById(inputId), label=(inp.value||'').trim();
   if(!label){toast('Nom obligatoire','error');return;}
   const key=slugify(label);
   if(!key){toast('Nom invalide','error');return;}
   const list=_typeList(kind);
   if(list.some(t=>t.key===key)){toast('Ce type existe déjà','error');return;}
-  list.push({key,label});
+  const bg=document.getElementById(bgId).value, border=document.getElementById(borderId).value, color=document.getElementById(colorId).value;
+  list.push({key,label,bg,border,color});
   inp.value='';
   _syncAndSave(); renderTypesLists(); fillTypeSelectors(); renderClientTabs();
   toast('Type ajouté !','success');

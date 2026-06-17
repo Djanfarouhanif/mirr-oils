@@ -582,11 +582,23 @@
     <div class="modal-body">
       <div class="card-title" style="margin-bottom:8px"><i class="ti ti-users"></i> Types de client</div>
       <div id="clientTypesList"></div>
-      <div style="display:flex;gap:8px;margin:8px 0 18px"><input type="text" id="newClientType" placeholder="Nouveau type de client" style="flex:1"><button class="btn btn-primary btn-sm" onclick="addClientType()"><i class="ti ti-plus"></i> Ajouter</button></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0 18px">
+        <input type="text" id="newClientType" placeholder="Nouveau type de client" style="flex:1;min-width:140px">
+        <label class="fs-11 text-muted">Fond <input type="color" id="newClientTypeBg" value="#e8f0fe"></label>
+        <label class="fs-11 text-muted">Bordure <input type="color" id="newClientTypeBorder" value="#4285f4"></label>
+        <label class="fs-11 text-muted">Texte <input type="color" id="newClientTypeColor" value="#1a56db"></label>
+        <button class="btn btn-primary btn-sm" onclick="addClientType()"><i class="ti ti-plus"></i> Ajouter</button>
+      </div>
       <hr class="receipt-divider">
       <div class="card-title" style="margin:14px 0 8px"><i class="ti ti-coin"></i> Types de prix</div>
       <div id="priceTypesList"></div>
-      <div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="newPriceType" placeholder="Nouveau type de prix" style="flex:1"><button class="btn btn-primary btn-sm" onclick="addPriceType()"><i class="ti ti-plus"></i> Ajouter</button></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px">
+        <input type="text" id="newPriceType" placeholder="Nouveau type de prix" style="flex:1;min-width:140px">
+        <label class="fs-11 text-muted">Fond <input type="color" id="newPriceTypeBg" value="#e6f4ea"></label>
+        <label class="fs-11 text-muted">Bordure <input type="color" id="newPriceTypeBorder" value="#34a853"></label>
+        <label class="fs-11 text-muted">Texte <input type="color" id="newPriceTypeColor" value="#137333"></label>
+        <button class="btn btn-primary btn-sm" onclick="addPriceType()"><i class="ti ti-plus"></i> Ajouter</button>
+      </div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeModal('modalTypes')">Fermer</button></div>
   </div>
