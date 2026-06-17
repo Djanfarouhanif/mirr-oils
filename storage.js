@@ -238,6 +238,7 @@ function validateDataFile(data) {
  * Le fichier est validé avant tout remplacement des données.
  */
 function storageImportJSON() {
+  if (typeof requireAuth === 'function' && requireAuth(() => storageImportJSON())) return;   // mot de passe requis
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json,application/json';

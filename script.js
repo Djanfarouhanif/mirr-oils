@@ -2095,6 +2095,7 @@ function confirmImport(){
 
 /** Exporte toutes les données (data.json) en téléchargement. */
 function exportDataJSON(){
+  if(requireAuth(()=>exportDataJSON())) return;   // mot de passe requis
   if(!window._storageData){ toast('Données non disponibles','error'); return; }
   // _storageData est tenu à jour par _syncAndSave à chaque modification
   if(typeof storageExportJSON==='function') storageExportJSON(window._storageData);
