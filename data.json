@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "app": "Mirr Oils",
-    "lastSaved": "2026-06-17T18:01:22.476Z"
+    "lastSaved": "2026-06-17T18:54:05.105Z"
   },
   "objectifs": {
     "caM": 2000000,
@@ -950,13 +950,15 @@
     }
   ],
   "entreprise": {
-    "nom": "Mirr Oils",
+    "nom": "Mirr Oil",
     "slogan": "Distribution Huiles Moteur & Lubrifiants",
     "tel": "+228 00 00 00 00",
     "email": "contact@mirroils.tg",
     "adresse": "Lome, Togo",
     "nif": "",
-    "rccm": ""
+    "rccm": "",
+    "logo": "",
+    "logoSimple": ""
   },
   "objWeek": {},
   "objMonth": {

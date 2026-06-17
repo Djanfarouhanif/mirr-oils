@@ -33,7 +33,9 @@ var ENTREPRISE = {
   email:  'contact@mirroils.tg',
   adresse:'Lome, Togo',
   nif:    '',
-  rccm:   ''
+  rccm:   '',
+  logo:       '',   // logo complet (data URL) — vide = utilise logo.png
+  logoSimple: ''    // logo simple (data URL) — vide = utilise simple-logo.png
 };
 
 // Base de données en mémoire — peuplée par storage.js

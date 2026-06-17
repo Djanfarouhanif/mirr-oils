@@ -1898,6 +1898,50 @@ function applyEntreprise() {
   const an=document.getElementById('appName'); if(an) an.textContent=n;
   const lm=document.getElementById('logoMark'); if(lm) lm.textContent=n.charAt(0).toUpperCase();
   document.title=n+' -- Gestion Commerciale';
+  applyLogos();
+}
+
+/** Applique les logos (importés ou par défaut) à la sidebar et aux aperçus. */
+function applyLogos() {
+  const full   = (ENTREPRISE.logo && ENTREPRISE.logo.length)             ? ENTREPRISE.logo       : 'logo.png';
+  const simple = (ENTREPRISE.logoSimple && ENTREPRISE.logoSimple.length) ? ENTREPRISE.logoSimple : 'simple-logo.png';
+  const set=(id,src)=>{const e=document.getElementById(id); if(e) e.src=src;};
+  set('sideLogoFull',full); set('sideLogoSimple',simple);
+  set('logoFullPreview',full); set('logoSimplePreview',simple);
+}
+
+/** Importe un logo (kind='logo' ou 'logoSimple'), le redimensionne (PNG, transparence conservée). */
+function onLogoSelected(kind, e){
+  const file=e.target.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){ toast('Fichier image invalide','error'); return; }
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max = kind==='logoSimple' ? 128 : 400;
+      let w=img.width, h=img.height;
+      if(w>h && w>max){ h=Math.round(h*max/w); w=max; }
+      else if(h>max){ w=Math.round(w*max/h); h=max; }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      ENTREPRISE[kind]=c.toDataURL('image/png');   // PNG => conserve la transparence
+      _syncAndSave();
+      applyLogos();
+      toast('Logo mis à jour !','success');
+    };
+    img.onerror=()=>toast('Image illisible','error');
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/** Réinitialise un logo au fichier par défaut. */
+function resetLogo(kind){
+  ENTREPRISE[kind]='';
+  _syncAndSave();
+  applyLogos();
+  toast('Logo réinitialisé','success');
 }
 
 /** Pré-remplit les champs Paramètres entreprise depuis ENTREPRISE. */

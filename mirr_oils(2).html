@@ -72,9 +72,8 @@
 <!-- SIDEBAR -->
 <nav class="sidebar" id="sidebar">
   <div class="logo-wrap">
-    <img src="logo.png" class="logo-full" alt="Mirr Oils">
-
-    <img src="simple-logo.png" class="logo-simple" alt="Mirr Oils">
+    <img src="logo.png" class="logo-full" id="sideLogoFull" alt="Mirr Oils">
+    <img src="simple-logo.png" class="logo-simple" id="sideLogoSimple" alt="Mirr Oils">
   </div>
   <div class="nav">
     <div class="nav-section">Principal</div>
@@ -388,6 +387,34 @@
         <div class="color-swatch" style="background:#1A7A7A" data-c="#1A7A7A" data-cd="#0E5E5E" onclick="setColor(this)"><i class="ti ti-check check"></i></div>
       </div>
       <div class="form-group"><label class="lbl">Couleur personnalisee</label><div class="input-group"><input type="color" value="#C0392B" id="customColor"><input type="text" value="#C0392B" id="customColorHex" style="width:120px"><button class="btn" onclick="applyCustomColor()">Appliquer</button></div></div>
+    </div>
+    <div class="card mb-16">
+      <div class="card-header"><div class="card-title"><i class="ti ti-photo"></i> Logos</div></div>
+      <p class="fs-13 text-muted" style="margin-bottom:14px">Importez votre logo complet (sidebar ouverte) et votre logo simple (sidebar repliée). PNG sur fond transparent recommandé.</p>
+      <div class="g2">
+        <div class="form-group">
+          <label class="lbl">Logo complet</label>
+          <div style="display:flex;align-items:center;gap:12px">
+            <img id="logoFullPreview" src="logo.png" alt="" style="height:48px;max-width:150px;object-fit:contain;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:4px">
+            <input type="file" id="logoFullInput" accept="image/*" style="display:none" onchange="onLogoSelected('logo',event)">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button type="button" class="btn btn-sm" onclick="document.getElementById('logoFullInput').click()"><i class="ti ti-upload"></i> Importer</button>
+              <button type="button" class="btn btn-sm" onclick="resetLogo('logo')"><i class="ti ti-restore"></i> Défaut</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="lbl">Logo simple</label>
+          <div style="display:flex;align-items:center;gap:12px">
+            <img id="logoSimplePreview" src="simple-logo.png" alt="" style="height:48px;width:48px;object-fit:contain;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:4px">
+            <input type="file" id="logoSimpleInput" accept="image/*" style="display:none" onchange="onLogoSelected('logoSimple',event)">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button type="button" class="btn btn-sm" onclick="document.getElementById('logoSimpleInput').click()"><i class="ti ti-upload"></i> Importer</button>
+              <button type="button" class="btn btn-sm" onclick="resetLogo('logoSimple')"><i class="ti ti-restore"></i> Défaut</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-sun-moon"></i> Theme</div></div>
