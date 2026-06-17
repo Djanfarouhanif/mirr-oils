@@ -37,7 +37,8 @@
 <!-- Dans les options de paramètre ajouter le logo et le nom à afficher -->
 
 <!-- Possibilité de faire des exports en excel -->
-export format json import format json
+<!-- export format json import format json -->
 
-Réinitialiser toutes les donner (mots de passe supper admin 7009)
+<!-- Réinitialiser toutes les donner (mots de passe supper admin 7009) -->
+<!-- FAIT : Paramètres → Données → bouton "Réinitialiser" (confirmation par mot de passe). Vide ventes/dépenses/clients/produits/mouvements/trésorerie + objectifs spécifiques, remet les soldes initiaux à 0. Conserve la structure data.json et la config (comptes, types, catégories, objectifs globaux, entreprise, mot de passe). NB : utilise le mot de passe d'accès, pas le 7009 (à préciser si voulu). -->
 <!-- Gestion de stock -->

@@ -2052,6 +2052,43 @@ function exportDataJSON(){
   else toast('Export indisponible','error');
 }
 
+/**
+ * Réinitialise les DONNÉES en conservant la STRUCTURE de data.json.
+ * Vide : ventes, dépenses, clients, produits, mouvements de stock, trésorerie,
+ *        et les objectifs spécifiques semaine/mois. Remet les soldes initiaux à 0.
+ * Conserve : comptes, types de client/prix, catégories, objectifs globaux,
+ *            coordonnées entreprise, mot de passe (la structure/configuration).
+ * Confirmation par mot de passe (requireAuth).
+ */
+function resetData(){
+  if(requireAuth(()=>resetData())) return;   // demande le mot de passe d'abord
+  if(!confirm('⚠ Réinitialiser TOUTES les données ?\n\nSeront vidés : ventes, dépenses, clients, produits, mouvements de stock, trésorerie.\nSera conservé : la configuration (comptes, types, catégories, objectifs, coordonnées, mot de passe).\n\nCette action est IRRÉVERSIBLE. Pensez à exporter d\'abord.')) return;
+
+  window.DB.sales=[];
+  window.DB.depenses=[];
+  window.DB.clients=[];
+  window.DB.produits=[];
+  window.DB.mouvements=[];
+  window.DB.tresorerie=[];
+  window.DB.objWeek={};
+  window.DB.objMonth={};
+  (window.DB.comptes||[]).forEach(c=>c.soldeInitial=0);   // soldes remis à zéro, comptes conservés
+
+  _syncAndSave();   // persiste la structure vidée dans data.json
+
+  // Rafraîchit toute l'interface
+  fillProductOptions(); fillClientDropdown(); fillCompteSelectors();
+  renderSales(); updateSaleStats();
+  renderDepenses(); updateDepStats();
+  renderClients(); renderClientTabs();
+  renderProduits();
+  renderTresorerie();
+  refreshDashboard();
+  syncObjectifsUI();
+  populateReportSelectors(); loadWeekReport(); loadMonthReport();
+  toast('Données réinitialisées (structure conservée)','success');
+}
+
 // Au chargement : focus le champ mot de passe si l'écran de verrouillage est visible
 (function(){
   const ls=document.getElementById('lockScreen');
