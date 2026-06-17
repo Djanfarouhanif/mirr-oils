@@ -1454,6 +1454,66 @@ function generatePDF(type) {
   toast('PDF généré et téléchargé !','success');
 }
 
+/** Export Excel (.xlsx) du rapport hebdomadaire ou mensuel — mêmes données que le PDF. */
+function generateExcel(type){
+  if(typeof XLSX==='undefined'){ toast('Bibliothèque Excel non chargée','error'); return; }
+  const isH=type==='hebdo';
+  const key=isH?document.getElementById('repWeekSel').value:document.getElementById('repMonthSel').value;
+  const d=isH?computeWeekData(key):computeMonthData(key);
+  if(!d){ toast('Aucun rapport sélectionné','error'); return; }
+  const E=window.ENTREPRISE||{};
+  const rows=[];
+  rows.push([(E.nom||'Mirr Oils')]);
+  rows.push([isH?'Rapport hebdomadaire':'Rapport mensuel', d.label]);
+  rows.push([]);
+  // Indicateurs clés
+  rows.push(['Indicateur','Valeur (XOF)']);
+  rows.push(['CA', d.ca]);
+  rows.push(['Dépenses', d.dep]);
+  rows.push(['Résultat net', d.net]);
+  if(isH) rows.push(['Jours actifs', d.jours]);
+  rows.push(['Objectif CA', d.objCA]);
+  rows.push(['Taux objectif', (d.objCA?Math.round(d.ca/d.objCA*100):0)+' %']);
+  rows.push([]);
+
+  if(isH){
+    rows.push(['Récapitulatif par jour']);
+    rows.push(['Date','CA','Dépenses','Solde net']);
+    d.days.forEach(x=>rows.push([x.d, x.ca, x.dep, x.ca-x.dep]));
+    rows.push(['TOTAL', d.ca, d.dep, d.net]);
+    rows.push([]);
+    rows.push(['Dépenses de la semaine']);
+    rows.push(['Date','Désignation','Montant']);
+    (d.depenses||[]).forEach(x=>rows.push([x.d, x.des, x.amt]));
+    rows.push([]);
+    if(d.prodSynth && d.prodSynth.length){
+      rows.push(['Synthèse des ventes par produit']);
+      rows.push(['Produit','Quantité','CA']);
+      d.prodSynth.forEach(p=>rows.push([p.n, p.qte, p.ca]));
+    }
+  } else {
+    rows.push(['Récapitulatif par semaine']);
+    rows.push(['Semaine','Période','CA','Dépenses','Résultat net']);
+    (d.weeks||[]).forEach(w=>rows.push([w.s, w.p, w.ca, w.dep, w.net]));
+    rows.push(['TOTAL MOIS','', d.ca, d.dep, d.net]);
+    rows.push([]);
+    rows.push(['Dépenses par catégorie']);
+    rows.push(['Catégorie','Montant']);
+    (d.depByCat||[]).forEach(x=>rows.push([x.cat, x.amt]));
+    rows.push([]);
+    rows.push(['Top produits (CA)']);
+    rows.push(['Produit','CA']);
+    (d.topProds||[]).forEach(p=>rows.push([p.n, p.ca]));
+  }
+
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:28},{wch:16},{wch:14},{wch:14},{wch:14}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, isH?'Hebdo':'Mensuel');
+  XLSX.writeFile(wb, (isH?'Mirr_Oils_Hebdo_':'Mirr_Oils_Mensuel_')+key+'.xlsx');
+  toast('Excel généré et téléchargé !','success');
+}
+
 function generateReceiptPDF() {
   const {jsPDF}=window.jspdf;
   const E=window.ENTREPRISE||{};

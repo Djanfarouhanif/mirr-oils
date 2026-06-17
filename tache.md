@@ -36,7 +36,7 @@
 
 <!-- Dans les options de paramètre ajouter le logo et le nom à afficher -->
 
-Possibilité de faire des exports en excel
+<!-- Possibilité de faire des exports en excel -->
 export format json import format json
 
 Réinitialiser toutes les donner (mots de passe supper admin 7009)

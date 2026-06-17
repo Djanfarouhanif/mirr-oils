@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body data-theme="dark">
@@ -291,6 +292,7 @@
           <!-- Options remplies dynamiquement par populateReportSelectors() -->
         </select>
         <button class="btn btn-primary" onclick="generatePDF('hebdo')"><i class="ti ti-file-type-pdf"></i> Generer PDF</button>
+        <button class="btn" onclick="generateExcel('hebdo')"><i class="ti ti-file-type-xls"></i> Generer Excel</button>
         <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer</button>
       </div>
     </div>
@@ -304,6 +306,7 @@
           <!-- Options remplies dynamiquement par populateReportSelectors() -->
         </select>
         <button class="btn btn-primary" onclick="generatePDF('mensuel')"><i class="ti ti-file-type-pdf"></i> Generer PDF</button>
+        <button class="btn" onclick="generateExcel('mensuel')"><i class="ti ti-file-type-xls"></i> Generer Excel</button>
         <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer</button>
       </div>
     </div>
