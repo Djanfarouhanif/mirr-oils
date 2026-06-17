@@ -1379,9 +1379,13 @@ function renderTresorerie() {
 
   const fc=document.getElementById('fTresoCompte').value;
   const fsens=document.getElementById('fTresoSens').value;
+  const ffrom=document.getElementById('fTresoFrom').value;
+  const fto=document.getElementById('fTresoTo').value;
   let rows=buildTresoMouvements();
   if(fc) rows=rows.filter(r=>String(r.compteId)===fc);
   if(fsens) rows=rows.filter(r=>r.sens===fsens);
+  if(ffrom) rows=rows.filter(r=>r.date>=ffrom);
+  if(fto) rows=rows.filter(r=>r.date<=fto);
   const body=document.getElementById('tresoBody'), empty=document.getElementById('tresoEmpty');
   if(!rows.length){body.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
@@ -1392,6 +1396,13 @@ function renderTresorerie() {
     const del=r.srcType==='manuel'?`<button class="btn btn-xs" onclick="editMouvement(${r.refId})" title="Modifier"><i class="ti ti-edit"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteMouvement(${r.refId})" title="Supprimer"><i class="ti ti-trash"></i></button>`:'<span class="text-muted fs-11">auto</span>';
     return `<tr><td>${fmtD(r.date)}</td><td>${compteName(r.compteId)}</td><td>${sensBadge}</td><td>${r.motif}</td><td><span class="badge b-default">${r.source}</span></td><td class="text-right num ${cls} fw-600">${sign}${fmt(r.amount)}</td><td class="text-center">${del}</td></tr>`;
   }).join('');
+}
+
+/** Efface la plage de dates du filtre des mouvements. */
+function resetTresoDates(){
+  document.getElementById('fTresoFrom').value='';
+  document.getElementById('fTresoTo').value='';
+  renderTresorerie();
 }
 
 // ---- CRUD moyens de trésorerie ----
