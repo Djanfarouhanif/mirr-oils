@@ -1901,13 +1901,34 @@ function applyEntreprise() {
   applyLogos();
 }
 
-/** Applique les logos (importés ou par défaut) à la sidebar et aux aperçus. */
+/**
+ * Applique les logos : on affiche les images (importées ou fichiers logo.png /
+ * simple-logo.png). Si une image n'existe pas (échec de chargement), on bascule
+ * sur le bloc par défaut « M » + nom + tagline.
+ */
 function applyLogos() {
   const full   = (ENTREPRISE.logo && ENTREPRISE.logo.length)             ? ENTREPRISE.logo       : 'logo.png';
   const simple = (ENTREPRISE.logoSimple && ENTREPRISE.logoSimple.length) ? ENTREPRISE.logoSimple : 'simple-logo.png';
-  const set=(id,src)=>{const e=document.getElementById(id); if(e) e.src=src;};
-  set('sideLogoFull',full); set('sideLogoSimple',simple);
-  set('logoFullPreview',full); set('logoSimplePreview',simple);
+  const setSrc=(id,src)=>{const e=document.getElementById(id); if(e){ e.onerror=null; e.src=src; }};
+  setSrc('logoFullPreview',full); setSrc('logoSimplePreview',simple);
+
+  const def=document.getElementById('logoDefault');
+  const sf=document.getElementById('sideLogoFull');
+  const ss=document.getElementById('sideLogoSimple');
+  // On tente d'abord d'afficher les images ; le bloc par défaut reste caché
+  if(def) def.style.display='none';
+  if(sf){ sf.style.display=''; sf.onerror=useDefaultLogo; sf.src=full; }
+  if(ss){ ss.style.display=''; ss.onerror=useDefaultLogo; ss.src=simple; }
+}
+
+/** Repli : si une image de logo est introuvable, on affiche le bloc par défaut. */
+function useDefaultLogo() {
+  const def=document.getElementById('logoDefault');
+  const sf=document.getElementById('sideLogoFull');
+  const ss=document.getElementById('sideLogoSimple');
+  if(sf){ sf.onerror=null; sf.style.display='none'; }
+  if(ss){ ss.onerror=null; ss.style.display='none'; }
+  if(def) def.style.display='';   // pastille « M » + nom + tagline
 }
 
 /** Importe un logo (kind='logo' ou 'logoSimple'), le redimensionne (PNG, transparence conservée). */

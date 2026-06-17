@@ -16,6 +16,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:
 /* Logos : image complète quand la sidebar est ouverte, logo simple quand elle est repliée */
 .logo-full{height:80px;width:200px;object-fit:contain;display:block}
 .logo-simple{width:44px;height:44px;object-fit:contain;display:none;flex-shrink:0}
+.logo-default{display:flex;align-items:center;gap:10px}
 .logo-cap{font-size:11px;color:var(--text3);text-align:center;letter-spacing:.3px}
 .sidebar.collapsed .logo-full,.sidebar.collapsed .logo-cap{display:none}
 .sidebar.collapsed .logo-simple{display:block}
