@@ -21,6 +21,17 @@ var CATEGORIES = [];
 // `var` pour que OBJ === window.OBJ (voir CATEGORIES ci-dessus)
 var OBJ = { caM: 12000000, caH: 3000000, depMax: 250000 };
 
+// Coordonnées de l'entreprise (affichées sur les reçus / PDF, éditables en Paramètres)
+var ENTREPRISE = {
+  nom:    'Mirr Oils',
+  slogan: 'Distribution Huiles Moteur & Lubrifiants',
+  tel:    '+228 00 00 00 00',
+  email:  'contact@mirroils.tg',
+  adresse:'Lome, Togo',
+  nif:    '',
+  rccm:   ''
+};
+
 // Base de données en mémoire — peuplée par storage.js
 // `var` (et non `let`) est ESSENTIEL : storage.js remplit `window.DB`, et
 // avec `var` la variable globale DB et window.DB sont le MÊME objet. Avec

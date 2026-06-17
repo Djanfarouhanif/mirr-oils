@@ -255,6 +255,9 @@ function updateSaveIndicator(isoDate) {
     // Une clé absente de data.json garde donc une valeur de repli valide.
     window.OBJ = Object.assign({}, window.OBJ, data.objectifs || {});
 
+    // Coordonnées entreprise (même logique de fusion défauts + data.json)
+    window.ENTREPRISE = Object.assign({}, window.ENTREPRISE, data.entreprise || {});
+
     // Catégories de dépenses
     if (data.categories && data.categories.length) {
       // Vide et repopule le tableau global CATEGORIES

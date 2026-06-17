@@ -310,9 +310,10 @@
   <div id="param-general">
     <div class="card">
       <div class="card-header"><div class="card-title"><i class="ti ti-building-store"></i> Informations societe</div></div>
-      <div class="form-row cols-2"><div class="form-group"><label class="lbl">Nom plateforme</label><input type="text" id="sName" value="Mirr Oils"></div><div class="form-group"><label class="lbl">Slogan</label><input type="text" value="Distribution Huiles Moteur &amp; Lubrifiants"></div></div>
-      <div class="form-row cols-2"><div class="form-group"><label class="lbl">Telephone</label><input type="tel" value="+228 00 00 00 00"></div><div class="form-group"><label class="lbl">Email</label><input type="email" value="contact@mirroils.tg"></div></div>
-      <div class="form-group"><label class="lbl">Adresse</label><input type="text" value="BP 1234, Lome, Togo"></div>
+      <div class="form-row cols-2"><div class="form-group"><label class="lbl">Nom plateforme</label><input type="text" id="sName"></div><div class="form-group"><label class="lbl">Slogan</label><input type="text" id="sSlogan"></div></div>
+      <div class="form-row cols-2"><div class="form-group"><label class="lbl">Telephone</label><input type="tel" id="sTel"></div><div class="form-group"><label class="lbl">Email</label><input type="email" id="sEmail"></div></div>
+      <div class="form-group"><label class="lbl">Adresse</label><input type="text" id="sAdresse"></div>
+      <div class="form-row cols-2"><div class="form-group"><label class="lbl">NIF</label><input type="text" id="sNif" placeholder="N° d'identification fiscale"></div><div class="form-group"><label class="lbl">RCCM</label><input type="text" id="sRccm" placeholder="Registre du commerce"></div></div>
       <div class="form-row cols-3"><div class="form-group"><label class="lbl">Obj. CA mensuel (XOF)</label><input type="number" id="sObjCAM"></div><div class="form-group"><label class="lbl">Obj. CA hebdo (XOF)</label><input type="number" id="sObjCAH"></div><div class="form-group"><label class="lbl">Budget depenses max</label><input type="number" id="sObjDep"></div></div>
       <button class="btn btn-primary" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
     </div>
@@ -405,9 +406,10 @@
       <div class="receipt-paper" id="receiptContent">
         <div style="text-align:center;margin-bottom:14px">
           <div class="receipt-mark">M</div>
-          <div class="receipt-company">MIRR OILS</div>
-          <div style="font-size:10px;color:#888">Distribution Huiles Moteur &amp; Lubrifiants</div>
-          <div style="font-size:10px;color:#888">Lome, Togo</div>
+          <div class="receipt-company" id="rCompany">MIRR OILS</div>
+          <div style="font-size:10px;color:#888" id="rSlogan">Distribution Huiles Moteur &amp; Lubrifiants</div>
+          <div style="font-size:10px;color:#888" id="rAddr">Lome, Togo</div>
+          <div style="font-size:10px;color:#888" id="rTel">--</div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:10px;color:#999;margin:8px 0 12px">
           <span>N° <strong id="rNum">MO-2026-0001</strong></span><span>Date: <strong id="rDate">--</strong></span>
@@ -418,11 +420,15 @@
         <div class="receipt-line"><span class="rl-label">Prix unitaire</span><span id="rUnit">--</span></div>
         <div class="receipt-line"><span class="rl-label">Type de prix</span><span id="rType">Client</span></div>
         <div class="receipt-line"><span class="rl-label">Client</span><span id="rClient">--</span></div>
+        <div class="receipt-line" id="rClientPhoneLine" style="display:none"><span class="rl-label">Tel. client</span><span id="rClientPhone">--</span></div>
+        <div class="receipt-line"><span class="rl-label">Moyen de paiement</span><span id="rMoyen">--</span></div>
         <hr class="receipt-divider">
         <div class="receipt-line" id="rSubtotalLine" style="display:none"><span class="rl-label" style="font-weight:600">Sous-total</span><span style="font-weight:600" id="rSubtotal">--</span></div>
         <div class="receipt-line" id="rRemiseLine" style="display:none"><span class="rl-label" style="color:#c00">Remise accordee</span><span style="color:#c00;font-weight:600" id="rRemise">--</span></div>
         <div class="receipt-total-line"><span>NET A PAYER</span><span id="rTotal">0 XOF</span></div>
-        <div style="text-align:center;font-size:10px;color:#aaa;margin-top:12px;border-top:1px dashed #ddd;padding-top:8px">Merci pour votre confiance !<br>Mirr Oils -- +228 00 00 00 00</div>
+        <div class="receipt-line" id="rStatutLine" style="margin-top:8px"><span class="rl-label">Statut</span><span id="rStatut" style="font-weight:600">--</span></div>
+        <div class="receipt-line" id="rResteLine" style="display:none"><span class="rl-label" style="color:#c00">Reste a payer</span><span id="rReste" style="color:#c00;font-weight:600">--</span></div>
+        <div style="text-align:center;font-size:10px;color:#aaa;margin-top:12px;border-top:1px dashed #ddd;padding-top:8px" id="rFooter">Merci pour votre confiance !<br>Mirr Oils</div>
       </div>
     </div>
     <div class="modal-footer">

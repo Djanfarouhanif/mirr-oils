@@ -21,6 +21,7 @@ function _syncAndSave() {
     window._storageData.tresorerie = DB.tresorerie;
     window._storageData.nextId     = DB.nextId;
     window._storageData.objectifs = OBJ;
+    window._storageData.entreprise = ENTREPRISE;
     window._storageData.categories = [...CATEGORIES];
     storageSave(window._storageData);
   }
@@ -50,6 +51,7 @@ function navigate(page) {
   if(page==='tresorerie') renderTresorerie();
   if(page==='rapports')   { populateReportSelectors(); loadWeekReport(); loadMonthReport(); }
   if(page==='objectifs' || page==='parametres') syncObjectifsUI();
+  if(page==='parametres') syncEntrepriseUI();
 }
 document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',()=>navigate(i.dataset.page)));
 
@@ -206,7 +208,7 @@ function refreshDashboard() {
           <td>${s.clientName!=='--'?s.clientName:'—'}</td>
           <td class="text-right num fw-600">${fcfa(s.amount)}</td>
           <td class="text-center" style="white-space:nowrap">
-            <button class="btn btn-xs" onclick='showReceipt({prod:${sn},qty:${s.qty},priceType:"${s.priceType}",unitPrice:${s.unitPrice},remise:${s.remise||0},amount:${s.amount},clientName:${scl},date:${sd}})'><i class="ti ti-receipt"></i></button>
+            <button class="btn btn-xs" onclick='showReceipt({prod:${sn},qty:${s.qty},priceType:"${s.priceType}",unitPrice:${s.unitPrice},remise:${s.remise||0},amount:${s.amount},clientName:${scl},date:${sd},compteId:${s.compteId||defaultCompteId()},statut:"${s.statut||'paye'}"})'><i class="ti ti-receipt"></i></button>
             <button class="btn btn-xs" onclick="editSale(${s.id})"><i class="ti ti-edit"></i></button>
             <button class="btn btn-xs btn-danger-outline" onclick="deleteSale(${s.id});refreshDashboard()"><i class="ti ti-trash"></i></button>
           </td>
@@ -453,11 +455,20 @@ function saveAndReceipt() {
   const cli=document.getElementById('vClientName').value||document.getElementById('vClient').value||'--';
   const pt=document.getElementById('vPriceType').value;
   const date=document.getElementById('vDate').value;
+  const compteId=parseInt(document.getElementById('vCompte').value)||defaultCompteId();
+  const statut=document.getElementById('vStatut').value||'paye';
   // N'affiche le reçu que si la vente a bien été enregistrée (sinon : stock insuffisant, etc.)
-  if(saveSale()) showReceipt({prod,qty,priceType:pt,unitPrice:unit,remise:rem,amount:amt,clientName:cli,date:fmtD(date)});
+  if(saveSale()) showReceipt({prod,qty,priceType:pt,unitPrice:unit,remise:rem,amount:amt,clientName:cli,date:fmtD(date),compteId,statut});
 }
 
 function showReceipt(s) {
+  // En-tête entreprise (depuis la config ENTREPRISE)
+  const E=window.ENTREPRISE||{};
+  document.getElementById('rCompany').textContent=(E.nom||'Mirr Oils').toUpperCase();
+  document.getElementById('rSlogan').textContent=E.slogan||'';
+  document.getElementById('rAddr').textContent=E.adresse||'';
+  document.getElementById('rTel').textContent=E.tel||'';
+
   document.getElementById('rNum').textContent='MO-'+new Date().getFullYear()+'-'+String(window.DB.nextId).padStart(4,'0');
   document.getElementById('rDate').textContent=s.date||'--';
   document.getElementById('rProd').textContent=s.prod||'--';
@@ -465,6 +476,16 @@ function showReceipt(s) {
   document.getElementById('rUnit').textContent=fmt(s.unitPrice||0)+' XOF';
   document.getElementById('rType').textContent=ptL(s.priceType);
   document.getElementById('rClient').textContent=s.clientName||'--';
+
+  // Téléphone du client (recherché dans le répertoire par son nom)
+  const cliObj=(s.clientName&&s.clientName!=='--')?window.DB.clients.find(c=>c.name===s.clientName):null;
+  const phLine=document.getElementById('rClientPhoneLine');
+  if(cliObj && cliObj.phone){phLine.style.display='flex';document.getElementById('rClientPhone').textContent=cliObj.phone;}
+  else phLine.style.display='none';
+
+  // Moyen de paiement
+  document.getElementById('rMoyen').textContent = s.compteId ? compteName(s.compteId) : compteName(defaultCompteId());
+
   document.getElementById('rTotal').textContent=fmt(s.amount)+' XOF';
   const subtotal=(parseFloat(s.qty)||0)*(parseFloat(s.unitPrice)||0);
   const rl=document.getElementById('rRemiseLine'), rsl=document.getElementById('rSubtotalLine');
@@ -476,6 +497,22 @@ function showReceipt(s) {
   } else {
     rsl.style.display='none'; rl.style.display='none';
   }
+
+  // Statut + reste à payer
+  const paye=(s.statut||'paye')==='paye';
+  const st=document.getElementById('rStatut');
+  st.textContent=paye?'PAYÉE':'NON PAYÉE';
+  st.style.color=paye?'#1E8449':'#c00';
+  const resteLine=document.getElementById('rResteLine');
+  if(!paye){resteLine.style.display='flex';document.getElementById('rReste').textContent=fmt(s.amount)+' XOF';}
+  else resteLine.style.display='none';
+
+  // Pied de page : merci + coordonnées
+  const foot=['Merci pour votre confiance !'];
+  const l2=[E.tel,E.email].filter(Boolean).join(' -- '); if(l2) foot.push(l2);
+  const l3=[E.nif?'NIF: '+E.nif:'',E.rccm?'RCCM: '+E.rccm:''].filter(Boolean).join(' -- '); if(l3) foot.push(l3);
+  document.getElementById('rFooter').innerHTML=foot.join('<br>');
+
   openModal('modalRecu');
 }
 
@@ -536,7 +573,7 @@ function renderSales() {
       : `<span class="badge b-danger">Non payée</span> <button class="btn btn-xs" onclick="markSalePaid(${s.id})" title="Marquer comme payée"><i class="ti ti-check"></i></button>`;
     return`<tr><td>${fmtD(s.date)}</td><td>${s.prod}</td><td class="num">${s.qty}</td><td>${catBadge(s.priceType)}</td><td class="num ${s.remise>0?'text-warning':''}">${s.remise>0?'-'+fmt(s.remise):'--'}</td><td>${s.clientName!=='--'?s.clientName:'--'}</td><td class="text-right num fw-600">${fmt(s.amount)}</td><td style="white-space:nowrap">${statutCell}</td>
     <td class="text-center" style="white-space:nowrap">
-      <button class="btn btn-xs" onclick='showReceipt({prod:${sn},qty:${s.qty},priceType:"${s.priceType}",unitPrice:${s.unitPrice},remise:${s.remise||0},amount:${s.amount},clientName:${scl},date:${sd}})'><i class="ti ti-receipt"></i></button>
+      <button class="btn btn-xs" onclick='showReceipt({prod:${sn},qty:${s.qty},priceType:"${s.priceType}",unitPrice:${s.unitPrice},remise:${s.remise||0},amount:${s.amount},clientName:${scl},date:${sd},compteId:${s.compteId||defaultCompteId()},statut:"${s.statut||'paye'}"})'><i class="ti ti-receipt"></i></button>
       <button class="btn btn-xs" onclick="editSale(${s.id})"><i class="ti ti-edit"></i></button>
       <button class="btn btn-xs btn-danger-outline" onclick="deleteSale(${s.id})"><i class="ti ti-trash"></i></button>
     </td></tr>`;
@@ -1267,30 +1304,48 @@ function generatePDF(type) {
 
 function generateReceiptPDF() {
   const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:[80,160]});
+  const E=window.ENTREPRISE||{};
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:[80,170]});
   const num=document.getElementById('rNum').textContent, prod=document.getElementById('rProd').textContent;
   const qty=document.getElementById('rQty').textContent, unit=document.getElementById('rUnit').textContent;
   const type=document.getElementById('rType').textContent, client=document.getElementById('rClient').textContent;
   const total=document.getElementById('rTotal').textContent, date=document.getElementById('rDate').textContent;
+  const moyen=document.getElementById('rMoyen').textContent;
+  const statut=document.getElementById('rStatut').textContent;
+  const resteVisible=document.getElementById('rResteLine').style.display!=='none';
+  const reste=document.getElementById('rReste').textContent;
+  const cliPhoneVisible=document.getElementById('rClientPhoneLine').style.display!=='none';
+  const cliPhone=document.getElementById('rClientPhone').textContent;
   let y=8;
-  doc.setFillColor(192,57,43); doc.rect(0,0,80,16,'F');
+  doc.setFillColor(192,57,43); doc.rect(0,0,80,18,'F');
   doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont(undefined,'bold');
-  doc.text('MIRR OILS',40,8,{align:'center'});
-  doc.setFontSize(7); doc.setFont(undefined,'normal');
-  doc.text('Distribution Huiles Moteur & Lubrifiants',40,13,{align:'center'});
-  y=22; doc.setTextColor(50,50,50); doc.setFontSize(7);
+  doc.text((E.nom||'Mirr Oils').toUpperCase(),40,8,{align:'center'});
+  doc.setFontSize(6.5); doc.setFont(undefined,'normal');
+  if(E.slogan) doc.text(E.slogan,40,12,{align:'center'});
+  doc.text([E.adresse,E.tel].filter(Boolean).join(' — '),40,15.5,{align:'center'});
+  y=24; doc.setTextColor(50,50,50); doc.setFontSize(7);
   doc.text('N° '+num,10,y); doc.text('Date: '+date,70,y,{align:'right'}); y+=5;
   doc.setDrawColor(200); doc.line(10,y,70,y); y+=4;
-  [['Produit:',prod.length>22?prod.slice(0,22)+'...':prod],['Quantite:',String(qty)],['Prix unitaire:',unit],['Type:',type],['Client:',client]].forEach(([l,v])=>{
+  const rows=[['Produit:',prod.length>22?prod.slice(0,22)+'...':prod],['Quantite:',String(qty)],['Prix unitaire:',unit],['Type:',type],['Client:',client]];
+  if(cliPhoneVisible) rows.push(['Tel. client:',cliPhone]);
+  rows.push(['Moyen paiement:',moyen]);
+  rows.forEach(([l,v])=>{
     doc.setFont(undefined,'bold'); doc.text(l,10,y);
     doc.setFont(undefined,'normal'); doc.text(v,70,y,{align:'right'}); y+=5;
   });
   y+=2; doc.line(10,y,70,y); y+=4;
   doc.setFontSize(10); doc.setFont(undefined,'bold'); doc.setTextColor(192,57,43);
-  doc.text('TOTAL: '+total,40,y,{align:'center'}); y+=8;
+  doc.text('TOTAL: '+total,40,y,{align:'center'}); y+=6;
+  // Statut + reste
+  doc.setFontSize(8);
+  doc.setTextColor(statut.indexOf('NON')>=0?192:30, statut.indexOf('NON')>=0?0:132, statut.indexOf('NON')>=0?0:73);
+  doc.text('Statut: '+statut,40,y,{align:'center'}); y+=5;
+  if(resteVisible){ doc.setTextColor(192,0,0); doc.text('Reste a payer: '+reste,40,y,{align:'center'}); y+=5; }
+  y+=2;
   doc.setFontSize(7); doc.setTextColor(140,140,140); doc.setFont(undefined,'normal');
   doc.text('Merci pour votre confiance !',40,y,{align:'center'}); y+=4;
-  doc.text('Mirr Oils -- +228 00 00 00 00',40,y,{align:'center'});
+  const f2=[E.tel,E.email].filter(Boolean).join(' -- '); if(f2){doc.text(f2,40,y,{align:'center'}); y+=4;}
+  const f3=[E.nif?'NIF: '+E.nif:'',E.rccm?'RCCM: '+E.rccm:''].filter(Boolean).join(' -- '); if(f3){doc.text(f3,40,y,{align:'center'}); y+=4;}
   doc.save('Recu_'+num+'.pdf');
   toast('Recu PDF telecharge !','success');
 }
@@ -1581,16 +1636,39 @@ function switchParam(p,el) {
   ['general','apparence','categories'].forEach(id=>{const e=document.getElementById('param-'+id);if(e)e.style.display=(id===p)?'block':'none';});
 }
 function saveSettings() {
-  const n=document.getElementById('sName').value||'Mirr Oils';
-  document.getElementById('appName').textContent=n;
-  document.getElementById('logoMark').textContent=n.charAt(0).toUpperCase();
-  document.title=n+' -- Gestion Commerciale';
+  // Coordonnées entreprise
+  const v=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};
+  ENTREPRISE.nom    = v('sName')||'Mirr Oils';
+  ENTREPRISE.slogan = v('sSlogan');
+  ENTREPRISE.tel    = v('sTel');
+  ENTREPRISE.email  = v('sEmail');
+  ENTREPRISE.adresse= v('sAdresse');
+  ENTREPRISE.nif    = v('sNif');
+  ENTREPRISE.rccm   = v('sRccm');
+  applyEntreprise();
+  // Objectifs
   OBJ.caM=parseFloat(document.getElementById('sObjCAM').value)||OBJ.caM;
   OBJ.caH=parseFloat(document.getElementById('sObjCAH').value)||OBJ.caH;
   OBJ.depMax=parseFloat(document.getElementById('sObjDep').value)||OBJ.depMax;
   syncObjectifsUI();
   _syncAndSave();
   toast('Parametres sauvegardes !','success');
+}
+
+/** Applique le nom de l'entreprise à l'interface (logo, titre). */
+function applyEntreprise() {
+  const n=ENTREPRISE.nom||'Mirr Oils';
+  const an=document.getElementById('appName'); if(an) an.textContent=n;
+  const lm=document.getElementById('logoMark'); if(lm) lm.textContent=n.charAt(0).toUpperCase();
+  document.title=n+' -- Gestion Commerciale';
+}
+
+/** Pré-remplit les champs Paramètres entreprise depuis ENTREPRISE. */
+function syncEntrepriseUI() {
+  const set=(id,val)=>{const e=document.getElementById(id); if(e) e.value=val||'';};
+  set('sName',ENTREPRISE.nom); set('sSlogan',ENTREPRISE.slogan); set('sTel',ENTREPRISE.tel);
+  set('sEmail',ENTREPRISE.email); set('sAdresse',ENTREPRISE.adresse); set('sNif',ENTREPRISE.nif); set('sRccm',ENTREPRISE.rccm);
+  applyEntreprise();
 }
 function addCategoryPrompt() {
   const n=prompt('Nom de la nouvelle categorie :');
@@ -1646,6 +1724,7 @@ function appInit() {
   renderProduits();
   refreshDashboard();
   syncObjectifsUI();
+  syncEntrepriseUI();
   loadWeekReport();
   loadMonthReport();
 
