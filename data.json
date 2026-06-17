@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "app": "Mirr Oils",
-    "lastSaved": "2026-06-16T21:09:57.031Z"
+    "lastSaved": "2026-06-17T09:41:36.630Z"
   },
   "objectifs": {
     "caM": 12000000,
@@ -19,18 +19,6 @@
   ],
   "sales": [
     {
-      "id": 200,
-      "date": "2026-06-16",
-      "prod": "XDEO SAE 50 Fut 200L",
-      "qty": 0.5,
-      "priceType": "client",
-      "unitPrice": 370000,
-      "remise": 0,
-      "clientName": "--",
-      "amount": 185000,
-      "note": ""
-    },
-    {
       "id": 1,
       "date": "2026-06-08",
       "prod": "Coolant 33% (4x4L)",
@@ -40,18 +28,6 @@
       "remise": 0,
       "clientName": "--",
       "amount": 23000,
-      "note": ""
-    },
-    {
-      "id": 2,
-      "date": "2026-06-08",
-      "prod": "5W30 (4x5L)",
-      "qty": 2,
-      "priceType": "client",
-      "unitPrice": 21000,
-      "remise": 0,
-      "clientName": "--",
-      "amount": 42000,
       "note": ""
     },
     {

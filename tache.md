@@ -1,6 +1,6 @@
 # Tache
-ajouter la section Stock puis les récuperer dynamiquement
 stocker l'etas de la page dans localStorage
+ajouter la section Stock puis les récuperer dynamiquement
 gere côté raport dynamiquement
 Corriger le format des chiffres sur le pdf
 Gestion des produits, ajouter les images de chaque produit

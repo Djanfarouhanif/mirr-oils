@@ -27,7 +27,9 @@ function _syncAndSave() {
 // ============================================================
 // NAVIGATION
 // ============================================================
+const PAGE_KEY = 'mirroils_page';   // clé localStorage pour la page active
 function navigate(page) {
+  try { localStorage.setItem(PAGE_KEY, page); } catch(e) {}   // mémorise la page
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const pe=document.getElementById('page-'+page);
@@ -883,4 +885,10 @@ function appInit() {
   refreshDashboard();
   loadWeekReport();
   loadMonthReport();
+
+  // Restaure la dernière page consultée (ou dashboard par défaut)
+  let savedPage = 'dashboard';
+  try { savedPage = localStorage.getItem(PAGE_KEY) || 'dashboard'; } catch(e) {}
+  if (!document.getElementById('page-' + savedPage)) savedPage = 'dashboard';
+  navigate(savedPage);
 }
