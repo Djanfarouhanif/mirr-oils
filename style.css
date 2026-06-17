@@ -89,6 +89,21 @@ textarea{resize:vertical;min-height:70px;line-height:1.5}input[type=color]{paddi
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
 .modal-title{font-size:15px;font-weight:600}.modal-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;padding:4px;border-radius:6px;line-height:1;transition:var(--transition)}.modal-close:hover{background:var(--bg3);color:var(--text)}
 .modal-body{padding:20px;overflow-y:auto;flex:1}.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+/* ECRAN DE VERROUILLAGE */
+#lockScreen{font-family:var(--font);color:var(--text)}
+.lock-card{width:340px;max-width:90vw;background:var(--bg2);border:1px solid var(--border2);border-radius:18px;padding:34px 30px;box-shadow:0 24px 70px rgba(0,0,0,.55);text-align:center}
+.lock-mark{width:60px;height:60px;border-radius:16px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;margin:0 auto 18px;box-shadow:0 6px 18px var(--primary-bg)}
+.lock-title{font-size:20px;font-weight:700;margin-bottom:4px}
+.lock-sub{font-size:12.5px;color:var(--text3);margin-bottom:24px;line-height:1.4}
+.lock-field{position:relative;margin-bottom:4px}
+.lock-field i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:16px;pointer-events:none}
+#lockPwd{width:100%;padding:12px 12px 12px 38px;border:1px solid var(--border2);border-radius:10px;background:var(--bg3);color:var(--text);font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s}
+#lockPwd:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-bg)}
+.lock-error{color:#e74c3c;font-size:12px;min-height:16px;margin:8px 2px 6px;text-align:left}
+.lock-btn{width:100%;padding:12px;border:none;border-radius:10px;background:var(--primary);color:#fff;font-weight:600;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,transform .05s;margin-top:8px}
+.lock-btn:hover{background:var(--primary-dark)}
+.lock-btn:active{transform:scale(.99)}
+
 /* TOASTS */
 .toast-container{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .toast{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.4);pointer-events:all;min-width:260px;max-width:340px;animation:toastIn .25s ease}

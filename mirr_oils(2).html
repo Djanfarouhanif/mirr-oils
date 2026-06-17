@@ -53,15 +53,18 @@
 })();
 </script>
 <!-- ÉCRAN DE VERROUILLAGE (masqué si session < 1h) -->
-<div id="lockScreen" style="position:fixed;inset:0;z-index:99999;background:var(--bg1,#15171c);display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:inherit;color:var(--text,#eee)">
-  <div style="width:64px;height:64px;border-radius:16px;background:var(--primary,#C0392B);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;margin-bottom:16px">M</div>
-  <div style="font-size:20px;font-weight:700;margin-bottom:4px" id="lockTitle">Mirr Oils</div>
-  <div style="font-size:13px;color:var(--text3,#999);margin-bottom:20px">Plateforme protégée — entrez le mot de passe</div>
-  <input type="password" id="lockPwd" placeholder="Mot de passe" autocomplete="current-password"
-    onkeydown="if(event.key==='Enter')tryUnlock()"
-    style="width:240px;padding:10px 12px;border:1px solid var(--border,#333);border-radius:8px;background:var(--bg2,#1e2128);color:var(--text,#eee);font-size:14px;text-align:center">
-  <div id="lockError" style="color:#e74c3c;font-size:12px;height:16px;margin:8px 0;display:none">Mot de passe incorrect</div>
-  <button onclick="tryUnlock()" style="width:240px;padding:10px;border:none;border-radius:8px;background:var(--primary,#C0392B);color:#fff;font-weight:600;cursor:pointer;font-size:14px">Déverrouiller</button>
+<div id="lockScreen" style="position:fixed;inset:0;z-index:99999;background:var(--bg1,#15171c);display:flex;align-items:center;justify-content:center">
+  <div class="lock-card">
+    <div class="lock-mark">M</div>
+    <div class="lock-title" id="lockTitle">Mirr Oils</div>
+    <div class="lock-sub">Plateforme protégée — entrez le mot de passe</div>
+    <div class="lock-field">
+      <i class="ti ti-lock"></i>
+      <input type="password" id="lockPwd" placeholder="Mot de passe" autocomplete="current-password" onkeydown="if(event.key==='Enter')tryUnlock()">
+    </div>
+    <div class="lock-error" id="lockError" style="display:none">Mot de passe incorrect</div>
+    <button class="lock-btn" onclick="tryUnlock()"><i class="ti ti-lock-open"></i> Déverrouiller</button>
+  </div>
 </div>
 <div class="app">
 <!-- SIDEBAR -->
