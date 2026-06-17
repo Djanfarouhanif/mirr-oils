@@ -237,12 +237,12 @@
   </div>
   <div class="card">
     <div class="card-header"><div class="card-title"><i class="ti ti-arrows-exchange"></i> Mouvements de trésorerie</div><button class="btn btn-primary" onclick="openMouvement()"><i class="ti ti-plus"></i> Nouveau mouvement</button></div>
-    <div class="filters-row">
-      <select id="fTresoCompte" onchange="renderTresorerie()" style="width:auto"><option value="">Tous les comptes</option></select>
-      <select id="fTresoSens" onchange="renderTresorerie()" style="width:auto"><option value="">Entrées + Sorties</option><option value="entree">Entrées seulement</option><option value="sortie">Sorties seulement</option></select>
+    <div class="filters-row" style="align-items:flex-end">
+      <div class="filter-group"><label>Compte</label><select id="fTresoCompte" onchange="renderTresorerie()" style="width:auto"><option value="">Tous les comptes</option></select></div>
+      <div class="filter-group"><label>Type</label><select id="fTresoSens" onchange="renderTresorerie()" style="width:auto"><option value="">Entrées + Sorties</option><option value="entree">Entrées seulement</option><option value="sortie">Sorties seulement</option></select></div>
       <div class="filter-group"><label>Du</label><input type="date" id="fTresoFrom" onchange="renderTresorerie()" style="width:auto"></div>
       <div class="filter-group"><label>Au</label><input type="date" id="fTresoTo" onchange="renderTresorerie()" style="width:auto"></div>
-      <button class="btn btn-sm" onclick="resetTresoDates()" title="Effacer les dates"><i class="ti ti-x"></i></button>
+      <button class="btn btn-sm" onclick="resetTresoDates()" title="Effacer les dates"><i class="ti ti-x"></i> Effacer</button>
     </div>
     <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Compte</th><th>Mouvement</th><th>Motif</th><th>Source</th><th class="text-right">Montant (XOF)</th><th class="text-center">Actions</th></tr></thead><tbody id="tresoBody"></tbody></table></div>
     <div id="tresoEmpty" style="display:none;text-align:center;padding:28px;color:var(--text3);font-size:13px">
