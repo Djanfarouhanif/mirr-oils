@@ -2044,6 +2044,14 @@ function changePassword(){
   toast('Mot de passe modifié !','success');
 }
 
+/** Exporte toutes les données (data.json) en téléchargement. */
+function exportDataJSON(){
+  if(!window._storageData){ toast('Données non disponibles','error'); return; }
+  // _storageData est tenu à jour par _syncAndSave à chaque modification
+  if(typeof storageExportJSON==='function') storageExportJSON(window._storageData);
+  else toast('Export indisponible','error');
+}
+
 // Au chargement : focus le champ mot de passe si l'écran de verrouillage est visible
 (function(){
   const ls=document.getElementById('lockScreen');
