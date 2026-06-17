@@ -4,7 +4,13 @@
 const fmt  = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 const fcfa = n => Math.round(n).toLocaleString('fr-FR') + ' FCFA';
 const fmtD = iso => { if(!iso)return'--'; const p=iso.split('-'); return p[2]+'/'+p[1]; };
-const ptL  = p => ({client:'Client',mecanicien:'Mecanicien',grossiste:'Grossiste',coursier:'Coursier'}[p]||p);
+const ptL  = p => {
+  // Libellé d'un type (client ou prix) — cherché dans les listes éditables, sinon repli
+  const all=[...((window.DB&&DB.clientTypes)||[]),...((window.DB&&DB.priceTypes)||[])];
+  const f=all.find(t=>t.key===p);
+  if(f) return f.label;
+  return ({client:'Client',mecanicien:'Mecanicien',grossiste:'Grossiste',coursier:'Coursier'}[p]||p);
+};
 const catBadge = c => { const m={client:'b-client',mecanicien:'b-meca',grossiste:'b-grossiste',coursier:'b-coursier'}; return `<span class="badge ${m[c]||'b-default'}">${ptL(c)}</span>`; };
 const getP = (prod,type) => { if(!prod)return 0; return {client:prod.pc,mecanicien:prod.pm,grossiste:prod.pg}[type]||prod.pc||0; };
 const hexRgba = (h,a) => { const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return `rgba(${r},${g},${b},${a})`; };
@@ -19,6 +25,8 @@ function _syncAndSave() {
     window._storageData.mouvements = DB.mouvements;
     window._storageData.comptes    = DB.comptes;
     window._storageData.tresorerie = DB.tresorerie;
+    window._storageData.clientTypes= DB.clientTypes;
+    window._storageData.priceTypes = DB.priceTypes;
     window._storageData.nextId     = DB.nextId;
     window._storageData.objectifs = OBJ;
     window._storageData.entreprise = ENTREPRISE;
@@ -318,6 +326,16 @@ function refreshStats() {
   deps.forEach(d=>{dmap[d.cat]=(dmap[d.cat]||0)+d.amount});
   const dk=Object.keys(dmap);
   buildChart('chartDep','doughnut',dk,[{data:dk.map(k=>dmap[k]),backgroundColor:['#E67E22','#2980B9','#8E44AD','#27AE60','#C0392B','#1ABC9C']}]);
+  // Ventes par client (les ventes sans client nommé sont regroupées sous « Comptoir »)
+  const cmap={};
+  sales.forEach(s=>{const n=(s.clientName&&s.clientName!=='--')?s.clientName:'Comptoir';if(!cmap[n])cmap[n]={ca:0,txn:0};cmap[n].ca+=s.amount;cmap[n].txn++;});
+  const clientArr=Object.entries(cmap).map(([n,v])=>({n,ca:v.ca,txn:v.txn})).sort((a,b)=>b.ca-a.ca);
+  const topC=clientArr.slice(0,6);
+  buildChart('chartTopClients','bar',topC.map(c=>c.n.length>16?c.n.slice(0,16)+'...':c.n),[{label:'CA',data:topC.map(c=>c.ca),backgroundColor:'rgba(41,128,185,.75)',borderColor:'#2980B9',borderWidth:1}]);
+  const totC=ca||1;
+  document.getElementById('clientStatsBody').innerHTML=clientArr.length
+    ? clientArr.map(c=>`<tr><td><strong>${c.n}</strong></td><td class="text-right num">${fmt(c.ca)}</td><td class="text-center">${c.txn}</td><td class="text-right num">${fmt(Math.round(c.ca/c.txn))}</td><td><div style="display:flex;align-items:center;gap:6px"><div class="progress-bar" style="flex:1"><div class="progress-fill pf-green" style="width:${Math.round(c.ca/totC*100)}%"></div></div><span class="fs-11">${Math.round(c.ca/totC*100)}%</span></div></td></tr>`).join('')
+    : '<tr><td colspan="5" class="text-center text-muted" style="padding:16px">Aucune vente sur cette periode</td></tr>';
   const totalCA=caVals.reduce((a,b)=>a+b,0)||1;
   document.getElementById('statsTableBody').innerHTML=keys.map(k=>{
     const gc=groups[k]?groups[k].ca:0;const gd=depGroups[k]||0;const gt=groups[k]?groups[k].txn:0;
@@ -694,9 +712,19 @@ function deleteClient(id) {
   renderClients(); updateClientCounts(); fillClientDropdown(); toast('Client supprime','success');
 }
 
-function filterClients(cat,el) {
-  document.querySelectorAll('#page-clients .tab-item').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active'); window.DB.clientFilter=cat; renderClients();
+function filterClients(cat) {
+  window.DB.clientFilter=cat; renderClientTabs(); renderClients();
+}
+/** Onglets clients (Tous + un par type de client) avec compteurs, rendus dynamiquement. */
+function renderClientTabs() {
+  const bar=document.getElementById('clientTabs'); if(!bar)return;
+  const clients=window.DB.clients, cur=window.DB.clientFilter||'';
+  let html=`<div class="tab-item ${cur===''?'active':''}" onclick="filterClients('')">Tous <span class="tag">${clients.length}</span></div>`;
+  html+=(window.DB.clientTypes||[]).map(t=>{
+    const n=clients.filter(c=>c.cat===t.key).length;
+    return `<div class="tab-item ${cur===t.key?'active':''}" onclick="filterClients('${t.key}')">${t.label} <span class="tag">${n}</span></div>`;
+  }).join('');
+  bar.innerHTML=html;
 }
 function renderClients() {
   const fs=(document.getElementById('fClientSearch')?.value||'').toLowerCase();
@@ -704,13 +732,74 @@ function renderClients() {
   document.getElementById('clientBody').innerHTML=rows.map(c=>`<tr><td><strong>${c.name}</strong></td><td>${catBadge(c.cat)}</td><td>${c.phone||'--'}</td><td>${c.email||'--'}</td><td>${c.addr||'--'}</td><td>${catBadge(c.priceType)}</td><td class="${c.solde>0?'text-danger fw-600':''} num">${c.solde>0?fmt(c.solde):'--'}</td>
   <td class="text-center" style="white-space:nowrap"><button class="btn btn-xs"><i class="ti ti-edit"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteClient(${c.id})"><i class="ti ti-trash"></i></button></td></tr>`).join('');
 }
-function updateClientCounts() {
-  const c=window.DB.clients;
-  document.getElementById('cntAll').textContent=c.length;
-  document.getElementById('cntClient').textContent=c.filter(x=>x.cat==='client').length;
-  document.getElementById('cntMeca').textContent=c.filter(x=>x.cat==='mecanicien').length;
-  document.getElementById('cntGros').textContent=c.filter(x=>x.cat==='grossiste').length;
-  document.getElementById('cntCour').textContent=c.filter(x=>x.cat==='coursier').length;
+function updateClientCounts() { renderClientTabs(); }
+
+// ============================================================
+// TYPES DE CLIENT & TYPES DE PRIX — catégories éditables (menu Client)
+// ============================================================
+/** Crée les types par défaut si les listes sont vides. */
+function ensureDefaultTypes() {
+  if(!window.DB.clientTypes || !window.DB.clientTypes.length){
+    window.DB.clientTypes=[{key:'client',label:'Client'},{key:'mecanicien',label:'Mecanicien'},{key:'grossiste',label:'Grossiste'},{key:'coursier',label:'Coursier'}];
+  }
+  if(!window.DB.priceTypes || !window.DB.priceTypes.length){
+    window.DB.priceTypes=[{key:'client',label:'Prix client'},{key:'mecanicien',label:'Prix mecanicien'},{key:'grossiste',label:'Prix grossiste'}];
+  }
+}
+/** Transforme un libellé en clé technique (minuscules, sans accents/espaces). */
+function slugify(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,''); }
+
+/** Remplit tous les <select> dépendant des types (catégorie client, type de prix, filtre stats). */
+function fillTypeSelectors() {
+  const setOpts=(id,arr)=>{const e=document.getElementById(id); if(!e)return; const cur=e.value; e.innerHTML=arr.map(t=>`<option value="${t.key}">${t.label}</option>`).join(''); if(cur&&arr.some(t=>t.key===cur))e.value=cur;};
+  setOpts('cCat',      window.DB.clientTypes);
+  setOpts('cPriceType',window.DB.priceTypes);
+  setOpts('vPriceType',window.DB.priceTypes);
+  const st=document.getElementById('statType');
+  if(st){const cur=st.value; st.innerHTML='<option value="">Tous</option>'+window.DB.priceTypes.map(t=>`<option value="${t.key}">${t.label}</option>`).join(''); if(cur)st.value=cur;}
+}
+
+// ---- CRUD des types ----
+function openTypesModal(){ renderTypesLists(); openModal('modalTypes'); }
+function renderTypesLists(){
+  const row=(kind,t)=>`<div class="flex-between" style="padding:8px 0;border-bottom:1px solid var(--border)"><div class="flex gap-8"><i class="ti ti-tag" style="color:var(--primary)"></i><span>${t.label}</span> <span class="fs-11 text-muted">(${t.key})</span></div><div style="display:flex;gap:4px"><button class="btn btn-xs" onclick="renameType('${kind}','${t.key}')" title="Renommer"><i class="ti ti-edit"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteType('${kind}','${t.key}')" title="Supprimer"><i class="ti ti-trash"></i></button></div></div>`;
+  document.getElementById('clientTypesList').innerHTML=(window.DB.clientTypes||[]).map(t=>row('client',t)).join('')||'<div class="text-muted fs-12">Aucun</div>';
+  document.getElementById('priceTypesList').innerHTML=(window.DB.priceTypes||[]).map(t=>row('price',t)).join('')||'<div class="text-muted fs-12">Aucun</div>';
+}
+function _typeList(kind){ return kind==='client'?window.DB.clientTypes:window.DB.priceTypes; }
+function addClientType(){ _addType('client','newClientType'); }
+function addPriceType(){ _addType('price','newPriceType'); }
+function _addType(kind,inputId){
+  const inp=document.getElementById(inputId), label=(inp.value||'').trim();
+  if(!label){toast('Nom obligatoire','error');return;}
+  const key=slugify(label);
+  if(!key){toast('Nom invalide','error');return;}
+  const list=_typeList(kind);
+  if(list.some(t=>t.key===key)){toast('Ce type existe déjà','error');return;}
+  list.push({key,label});
+  inp.value='';
+  _syncAndSave(); renderTypesLists(); fillTypeSelectors(); renderClientTabs();
+  toast('Type ajouté !','success');
+}
+function renameType(kind,key){
+  const t=_typeList(kind).find(x=>x.key===key); if(!t)return;
+  const nl=prompt('Nouveau nom :',t.label); if(nl===null)return;
+  const label=nl.trim(); if(!label){toast('Nom obligatoire','error');return;}
+  t.label=label;
+  _syncAndSave(); renderTypesLists(); fillTypeSelectors(); renderClientTabs(); renderClients();
+  toast('Type renommé !','success');
+}
+function deleteType(kind,key){
+  const list=_typeList(kind);
+  const used = kind==='client'
+    ? window.DB.clients.some(c=>c.cat===key)
+    : (window.DB.clients.some(c=>c.priceType===key) || window.DB.sales.some(s=>s.priceType===key));
+  if(used){toast('Impossible : ce type est utilisé par des clients/ventes','error');return;}
+  if(list.length<=1){toast('Au moins un type est requis','error');return;}
+  if(!confirm('Supprimer ce type ?'))return;
+  const i=list.findIndex(t=>t.key===key); if(i>=0) list.splice(i,1);
+  _syncAndSave(); renderTypesLists(); fillTypeSelectors(); renderClientTabs();
+  toast('Type supprimé','success');
 }
 
 // ============================================================
@@ -1712,6 +1801,9 @@ function appInit() {
     }
   } catch(e) {}
 
+  ensureDefaultTypes();
+  fillTypeSelectors();
+  renderClientTabs();
   ensureDefaultComptes();
   fillCompteSelectors();
   fillProductOptions();

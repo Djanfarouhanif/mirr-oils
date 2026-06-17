@@ -157,6 +157,10 @@
     <div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-chart-bar"></i> Top produits (CA)</div></div><div style="position:relative;height:220px"><canvas id="chartTopProd"></canvas></div></div>
     <div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-chart-pie"></i> Repartition depenses</div></div><div style="position:relative;height:220px"><canvas id="chartDep"></canvas></div></div>
   </div>
+  <div class="g2">
+    <div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-users"></i> Top clients (CA)</div></div><div style="position:relative;height:220px"><canvas id="chartTopClients"></canvas></div></div>
+    <div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-user-dollar"></i> Ventes par client</div></div><div class="tbl-wrap" style="max-height:240px;overflow:auto"><table><thead><tr><th>Client</th><th class="text-right">CA (XOF)</th><th class="text-center">Ventes</th><th class="text-right">Ticket moyen</th><th>% CA</th></tr></thead><tbody id="clientStatsBody"></tbody></table></div></div>
+  </div>
   <div class="card">
     <div class="card-header"><div class="card-title"><i class="ti ti-table"></i> Detail par periode</div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Periode</th><th class="text-right">CA (XOF)</th><th class="text-right">Depenses</th><th class="text-right">Resultat net</th><th>% CA</th><th>Transactions</th><th>Ticket moyen</th></tr></thead><tbody id="statsTableBody"></tbody></table></div>
@@ -199,17 +203,12 @@
 </div>
 <!-- PAGE: CLIENTS -->
 <div class="page" id="page-clients">
-  <div class="tabs-bar">
-    <div class="tab-item active" onclick="filterClients('',this)">Tous <span class="tag" id="cntAll">0</span></div>
-    <div class="tab-item" onclick="filterClients('client',this)">Clients <span class="tag" id="cntClient">0</span></div>
-    <div class="tab-item" onclick="filterClients('mecanicien',this)">Mecaniciens <span class="tag" id="cntMeca">0</span></div>
-    <div class="tab-item" onclick="filterClients('grossiste',this)">Grossistes <span class="tag" id="cntGros">0</span></div>
-    <div class="tab-item" onclick="filterClients('coursier',this)">Coursiers <span class="tag" id="cntCour">0</span></div>
-  </div>
+  <div class="tabs-bar" id="clientTabs"></div>
   <div class="card">
     <div class="card-header"><div class="card-title"><i class="ti ti-users"></i> Repertoire clients</div>
       <div style="display:flex;gap:8px">
         <div class="search-bar"><i class="ti ti-search"></i><input type="search" placeholder="Nom, telephone..." oninput="renderClients()" id="fClientSearch"></div>
+        <button class="btn" onclick="openTypesModal()"><i class="ti ti-tags"></i> Gérer les types</button>
         <button class="btn btn-primary" onclick="openModal('modalClient')"><i class="ti ti-user-plus"></i> Nouveau client</button>
       </div>
     </div>
@@ -574,6 +573,22 @@
       <div class="form-group"><label class="lbl">Motif</label><input type="text" id="mvMotif" placeholder="ex: Dépôt en banque, retrait espèces..."></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeModal('modalMouvement')">Annuler</button><button class="btn btn-primary" onclick="saveMouvement()"><i class="ti ti-device-floppy"></i> Enregistrer</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalTypes">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-tags" style="margin-right:8px;color:var(--primary)"></i>Gérer les types</span><button class="modal-close" onclick="closeModal('modalTypes')">x</button></div>
+    <div class="modal-body">
+      <div class="card-title" style="margin-bottom:8px"><i class="ti ti-users"></i> Types de client</div>
+      <div id="clientTypesList"></div>
+      <div style="display:flex;gap:8px;margin:8px 0 18px"><input type="text" id="newClientType" placeholder="Nouveau type de client" style="flex:1"><button class="btn btn-primary btn-sm" onclick="addClientType()"><i class="ti ti-plus"></i> Ajouter</button></div>
+      <hr class="receipt-divider">
+      <div class="card-title" style="margin:14px 0 8px"><i class="ti ti-coin"></i> Types de prix</div>
+      <div id="priceTypesList"></div>
+      <div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="newPriceType" placeholder="Nouveau type de prix" style="flex:1"><button class="btn btn-primary btn-sm" onclick="addPriceType()"><i class="ti ti-plus"></i> Ajouter</button></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalTypes')">Fermer</button></div>
   </div>
 </div>
 

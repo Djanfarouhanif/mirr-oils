@@ -44,6 +44,8 @@ var DB = {
   mouvements:   [],   // historique des mouvements de stock (réassorts, pertes)
   comptes:      [],   // moyens de trésorerie (caisse, Tmoney, Flooz, banque…)
   tresorerie:   [],   // mouvements de trésorerie MANUELS (dépôts, transferts, ajustements)
+  clientTypes:  [],   // catégories de client (client, mécanicien, grossiste…) — éditables
+  priceTypes:   [],   // catégories de prix (client, mécanicien, grossiste…) — éditables
   nextId:       200,
   clientFilter: ''
 };

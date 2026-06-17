@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "app": "Mirr Oils",
-    "lastSaved": "2026-06-17T14:34:11.235Z"
+    "lastSaved": "2026-06-17T15:17:14.293Z"
   },
   "objectifs": {
     "caM": 1000000,
@@ -864,5 +864,50 @@
       "amount": 1000000,
       "motif": "Dépense personnel"
     }
-  ]
+  ],
+  "clientTypes": [
+    {
+      "key": "client",
+      "label": "Client"
+    },
+    {
+      "key": "mecanicien",
+      "label": "Mecanicien"
+    },
+    {
+      "key": "grossiste",
+      "label": "Grossiste"
+    },
+    {
+      "key": "coursier",
+      "label": "Coursier"
+    },
+    {
+      "key": "test",
+      "label": "test"
+    }
+  ],
+  "priceTypes": [
+    {
+      "key": "client",
+      "label": "Prix client"
+    },
+    {
+      "key": "mecanicien",
+      "label": "Prix mecanicien"
+    },
+    {
+      "key": "grossiste",
+      "label": "Prix grossiste"
+    }
+  ],
+  "entreprise": {
+    "nom": "Mirr Oils",
+    "slogan": "Distribution Huiles Moteur & Lubrifiants",
+    "tel": "+228 00 00 00 00",
+    "email": "contact@mirroils.tg",
+    "adresse": "Lome, Togo",
+    "nif": "",
+    "rccm": ""
+  }
 }
