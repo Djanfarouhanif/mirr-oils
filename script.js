@@ -44,7 +44,7 @@ function navigate(page) {
   if(page==='depenses')   { renderDepenses(); updateDepStats(); }
   if(page==='clients')    { renderClients(); updateClientCounts(); }
   if(page==='produits')   renderProduits();
-  if(page==='rapports')   { loadWeekReport(); loadMonthReport(); }
+  if(page==='rapports')   { populateReportSelectors(); loadWeekReport(); loadMonthReport(); }
 }
 document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',()=>navigate(i.dataset.page)));
 
@@ -630,8 +630,178 @@ function renderProduits() {
 }
 
 // ============================================================
-// RAPPORTS (inchangés — données statiques WEEK_DATA/MONTH_DATA)
+// RAPPORTS — calculés dynamiquement depuis les vraies données (DB)
+// Remplace les anciens objets statiques WEEK_DATA / MONTH_DATA.
+//   • clé semaine  = date du lundi au format 'YYYY-MM-DD'
+//   • clé mois     = 'YYYY-MM'
 // ============================================================
+const JNAMES = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+
+// -- Helpers dates (sans décalage de fuseau) ----------------
+function _dateOf(iso) { return new Date(iso + 'T00:00:00'); }
+function _isoLocal(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function _addDays(d, n) { const r = new Date(d); r.setDate(d.getDate() + n); return r; }
+function _mondayOf(iso) { const d = _dateOf(iso); const day = d.getDay() || 7; return _addDays(d, 1 - day); }
+// Numéro de la semaine (S1, S2…) dans le mois du lundi donné
+function _weekNumInMonth(monday) {
+  const first = new Date(monday.getFullYear(), monday.getMonth(), 1);
+  const fd = first.getDay() || 7;
+  const firstMonday = _addDays(first, (8 - fd) % 7);   // 1er lundi du mois
+  return Math.round((monday - firstMonday) / (7 * 86400000)) + 1;
+}
+
+// -- Liste des semaines (lundis) ayant des données ----------
+function _weeksWithData() {
+  const set = new Set();
+  DB.sales.forEach(s => set.add(_isoLocal(_mondayOf(s.date))));
+  DB.depenses.forEach(d => set.add(_isoLocal(_mondayOf(d.date))));
+  return [...set].sort().reverse();
+}
+// -- Liste des mois ayant des données -----------------------
+function _monthsWithData() {
+  const set = new Set();
+  DB.sales.forEach(s => set.add(s.date.slice(0, 7)));
+  DB.depenses.forEach(d => set.add(d.date.slice(0, 7)));
+  return [...set].sort().reverse();
+}
+
+/**
+ * Construit un rapport hebdomadaire (Lun–Ven) depuis les vraies ventes/dépenses.
+ * @param {string} mondayISO date du lundi 'YYYY-MM-DD'
+ * @returns {Object|null} même structure que l'ancien WEEK_DATA[key]
+ */
+function computeWeekData(mondayISO) {
+  if (!mondayISO) return null;
+  const monday = _dateOf(mondayISO);
+  const fridayISO = _isoLocal(_addDays(monday, 4));   // libellé : semaine de travail Lun–Ven
+  const sundayISO = _isoLocal(_addDays(monday, 6));   // fenêtre réelle Lun–Dim (capte les dépenses du week-end)
+  const year = monday.getFullYear();
+
+  // Lignes par jour : Lun→Ven toujours affichés ; Sam/Dim seulement s'ils ont de l'activité
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const dayISO = _isoLocal(_addDays(monday, i));
+    const ca  = DB.sales.filter(s => s.date === dayISO).reduce((a, s) => a + s.amount, 0);
+    const dep = DB.depenses.filter(d => d.date === dayISO).reduce((a, d) => a + d.amount, 0);
+    if (i < 5 || ca > 0 || dep > 0) {
+      days.push({ d: JNAMES[_dateOf(dayISO).getDay()] + ' ' + fmtD(dayISO), ca, dep });
+    }
+  }
+
+  const weekSales = DB.sales.filter(s => s.date >= mondayISO && s.date <= sundayISO);
+  const weekDeps  = DB.depenses.filter(d => d.date >= mondayISO && d.date <= sundayISO);
+  const ca  = weekSales.reduce((a, s) => a + s.amount, 0);
+  const dep = weekDeps.reduce((a, d) => a + d.amount, 0);
+  const jours = new Set(weekSales.map(s => s.date)).size;
+
+  // Synthèse par produit
+  const pmap = {};
+  weekSales.forEach(s => {
+    if (!pmap[s.prod]) pmap[s.prod] = { n: s.prod, qte: 0, ca: 0 };
+    pmap[s.prod].qte += (s.qty || 0);
+    pmap[s.prod].ca  += s.amount;
+  });
+  const prodSynth = Object.values(pmap).sort((a, b) => b.ca - a.ca);
+
+  const depenses = weekDeps
+    .slice()
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(d => ({ d: fmtD(d.date), des: d.desig, amt: d.amount }));
+
+  return {
+    label: 'S' + _weekNumInMonth(monday) + ' — ' + fmtD(mondayISO) + ' au ' + fmtD(fridayISO) + '/' + year,
+    ca, dep, net: ca - dep, jours, objCA: OBJ.caH,
+    days, depenses, prodSynth
+  };
+}
+
+/**
+ * Construit un rapport mensuel (mois calendaire) depuis les vraies données.
+ * @param {string} monthKey 'YYYY-MM'
+ * @returns {Object|null} même structure que l'ancien MONTH_DATA[key]
+ */
+function computeMonthData(monthKey) {
+  if (!monthKey) return null;
+  const mSales = DB.sales.filter(s => s.date.slice(0, 7) === monthKey);
+  const mDeps  = DB.depenses.filter(d => d.date.slice(0, 7) === monthKey);
+  const ca  = mSales.reduce((a, s) => a + s.amount, 0);
+  const dep = mDeps.reduce((a, d) => a + d.amount, 0);
+
+  // Découpage en semaines ouvrées (Lun–Ven) limitées au mois
+  const weeks = [];
+  if (mSales.length || mDeps.length) {
+    const first = new Date(parseInt(monthKey.slice(0, 4)), parseInt(monthKey.slice(5, 7)) - 1, 1);
+    const last  = new Date(first.getFullYear(), first.getMonth() + 1, 0);
+    let monday = _mondayOf(_isoLocal(first));
+    let idx = 0;
+    while (monday <= last) {
+      const inMonth = [];
+      for (let i = 0; i < 7; i++) {   // semaine complète Lun–Dim, limitée au mois
+        const dayISO = _isoLocal(_addDays(monday, i));
+        if (dayISO.slice(0, 7) === monthKey) inMonth.push(dayISO);
+      }
+      if (inMonth.length) {
+        const wca  = mSales.filter(s => inMonth.includes(s.date)).reduce((a, s) => a + s.amount, 0);
+        const wdep = mDeps.filter(d => inMonth.includes(d.date)).reduce((a, d) => a + d.amount, 0);
+        if (wca || wdep) {   // ignore les semaines sans aucune activité
+          idx++;
+          weeks.push({
+            s: 'S' + idx,
+            p: fmtD(inMonth[0]) + '-' + fmtD(inMonth[inMonth.length - 1]),
+            ca: wca, dep: wdep, net: wca - wdep
+          });
+        }
+      }
+      monday = _addDays(monday, 7);
+    }
+  }
+
+  // Top produits
+  const pmap = {};
+  mSales.forEach(s => { pmap[s.prod] = (pmap[s.prod] || 0) + s.amount; });
+  const topProds = Object.entries(pmap).map(([n, ca]) => ({ n, ca })).sort((a, b) => b.ca - a.ca).slice(0, 5);
+
+  // Dépenses par catégorie
+  const cmap = {};
+  mDeps.forEach(d => { cmap[d.cat] = (cmap[d.cat] || 0) + d.amount; });
+  const depByCat = Object.entries(cmap).map(([cat, amt]) => ({ cat, amt })).sort((a, b) => b.amt - a.amt);
+
+  const M = ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+  return {
+    label: M[parseInt(monthKey.slice(5, 7)) - 1] + ' ' + monthKey.slice(0, 4),
+    ca, dep, net: ca - dep, objCA: OBJ.caM,
+    weeks, topProds, depByCat
+  };
+}
+
+/**
+ * Remplit les listes déroulantes des rapports selon les données réelles.
+ * Conserve la sélection courante si elle existe encore.
+ */
+function populateReportSelectors() {
+  const wSel = document.getElementById('repWeekSel');
+  if (wSel) {
+    const cur = wSel.value;
+    const weeks = _weeksWithData();
+    wSel.innerHTML = weeks.length
+      ? weeks.map(mon => { const d = computeWeekData(mon); return `<option value="${mon}">${d.label}</option>`; }).join('')
+      : '<option value="">Aucune donnée</option>';
+    if (cur && weeks.includes(cur)) wSel.value = cur;
+  }
+  const mSel = document.getElementById('repMonthSel');
+  if (mSel) {
+    const cur = mSel.value;
+    const months = _monthsWithData();
+    const ML = ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
+    mSel.innerHTML = months.length
+      ? months.map(mk => `<option value="${mk}">${ML[parseInt(mk.slice(5, 7)) - 1]} ${mk.slice(0, 4)}</option>`).join('')
+      : '<option value="">Aucune donnée</option>';
+    if (cur && months.includes(cur)) mSel.value = cur;
+  }
+}
+
 function switchReport(type,el) {
   document.querySelectorAll('#page-rapports .tab-item').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
@@ -640,7 +810,7 @@ function switchReport(type,el) {
 }
 function loadWeekReport() {
   const key=document.getElementById('repWeekSel').value;
-  const d=WEEK_DATA[key];
+  const d=computeWeekData(key);
   if(!d){document.getElementById('weekReportContent').innerHTML='<p class="text-muted">Rapport non disponible</p>';return;}
   const pct=Math.round(d.ca/d.objCA*100);
   const depObjW=100000, depPct=Math.round(d.dep/depObjW*100);
@@ -680,7 +850,7 @@ function loadWeekReport() {
 }
 function loadMonthReport() {
   const key=document.getElementById('repMonthSel').value;
-  const d=MONTH_DATA[key];
+  const d=computeMonthData(key);
   if(!d){document.getElementById('monthReportContent').innerHTML='<p class="text-muted">Rapport non disponible</p>';return;}
   const pct=Math.round(d.ca/d.objCA*100), depObj=250000, depPct=Math.round(d.dep/depObj*100);
   const netObj=Math.round(d.objCA*0.98), netPct=Math.round(d.net/netObj*100), totalCA=d.ca||1;
@@ -720,7 +890,7 @@ function generatePDF(type) {
   const {jsPDF}=window.jspdf;
   const isH=type==='hebdo';
   const key=isH?document.getElementById('repWeekSel').value:document.getElementById('repMonthSel').value;
-  const d=isH?WEEK_DATA[key]:MONTH_DATA[key];
+  const d=isH?computeWeekData(key):computeMonthData(key);
   if(!d){toast('Aucun rapport sélectionné','error');return;}
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const W=210,M=14,CW=W-M*2; let y=M;

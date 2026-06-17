@@ -233,12 +233,7 @@
       <div class="card-header"><div class="card-title"><i class="ti ti-calendar-week"></i> Selectionner une semaine</div></div>
       <div class="filters-row">
         <select id="repWeekSel" onchange="loadWeekReport()" style="min-width:240px">
-          <option value="S2-2026-06">S2 - 08/06 au 12/06/2026</option>
-          <option value="S1-2026-06">S1 - 02/06 au 06/06/2026</option>
-          <option value="S4-2026-05">S4 - 26/05 au 30/05/2026</option>
-          <option value="S3-2026-05">S3 - 19/05 au 23/05/2026</option>
-          <option value="S2-2026-05">S2 - 12/05 au 16/05/2026</option>
-          <option value="S1-2026-05">S1 - 05/05 au 09/05/2026</option>
+          <!-- Options remplies dynamiquement par populateReportSelectors() -->
         </select>
         <button class="btn btn-primary" onclick="generatePDF('hebdo')"><i class="ti ti-file-type-pdf"></i> Generer PDF</button>
         <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer</button>
@@ -251,12 +246,7 @@
       <div class="card-header"><div class="card-title"><i class="ti ti-calendar-month"></i> Selectionner un mois</div></div>
       <div class="filters-row">
         <select id="repMonthSel" onchange="loadMonthReport()" style="min-width:200px">
-          <option value="2026-06">Juin 2026</option>
-          <option value="2026-05">Mai 2026</option>
-          <option value="2026-04">Avril 2026</option>
-          <option value="2026-03">Mars 2026</option>
-          <option value="2026-02">Fevrier 2026</option>
-          <option value="2026-01">Janvier 2026</option>
+          <!-- Options remplies dynamiquement par populateReportSelectors() -->
         </select>
         <button class="btn btn-primary" onclick="generatePDF('mensuel')"><i class="ti ti-file-type-pdf"></i> Generer PDF</button>
         <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer</button>

@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "app": "Mirr Oils",
-    "lastSaved": "2026-06-17T09:41:36.630Z"
+    "lastSaved": "2026-06-17T10:05:07.565Z"
   },
   "objectifs": {
     "caM": 12000000,
@@ -373,7 +373,7 @@
       "date": "2026-06-08",
       "cat": "Carburant vehicule",
       "desig": "Carburant voiture",
-      "amount": 33000,
+      "amount": 330000,
       "note": ""
     },
     {
@@ -453,7 +453,7 @@
       "date": "2026-06-23",
       "cat": "Carburant vehicule",
       "desig": "Carburant",
-      "amount": 30000,
+      "amount": 300000,
       "note": ""
     },
     {
