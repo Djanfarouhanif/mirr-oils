@@ -2044,6 +2044,55 @@ function changePassword(){
   toast('Mot de passe modifié !','success');
 }
 
+// ---- Pop-up d'analyse du fichier importé (barre + pourcentage) ----
+let _pendingImport=null, _impTimer=null;
+function showImportAnalysis(validation, parsed){
+  _pendingImport = validation.ok ? parsed : null;
+  const bar=document.getElementById('impBar'), pct=document.getElementById('impPct');
+  const status=document.getElementById('impStatus'), res=document.getElementById('impResult');
+  const btn=document.getElementById('impConfirmBtn');
+  // Réinitialise le pop-up
+  status.innerHTML='<i class="ti ti-loader"></i> Analyse du fichier en cours…';
+  res.style.display='none'; res.innerHTML='';
+  btn.style.display='none';
+  bar.style.width='0%'; bar.style.background='var(--primary)'; pct.textContent='0';
+  openModal('modalImport');
+  // Animation de la barre 0 → 100 %
+  if(_impTimer) clearInterval(_impTimer);
+  let p=0;
+  _impTimer=setInterval(()=>{
+    p += Math.random()*9 + 5;
+    if(p>=100){ p=100; clearInterval(_impTimer); _impTimer=null; }
+    bar.style.width=p+'%'; pct.textContent=Math.round(p);
+    if(p>=100) setTimeout(()=>_showImportResult(validation), 250);
+  }, 90);
+}
+function _showImportResult(validation){
+  const bar=document.getElementById('impBar'), status=document.getElementById('impStatus'), res=document.getElementById('impResult');
+  res.style.display='block';
+  if(validation.ok){
+    bar.style.background='var(--success)';
+    status.innerHTML='<span style="color:var(--success);font-weight:600"><i class="ti ti-circle-check"></i> Fichier valide</span>';
+    if(validation.warnings.length){
+      res.innerHTML='<div style="font-size:12px;color:var(--warning);margin-bottom:6px"><i class="ti ti-alert-triangle"></i> Avertissements :</div><ul style="font-size:12px;color:var(--text2);padding-left:18px;margin:0">'+validation.warnings.map(w=>`<li>${w}</li>`).join('')+'</ul>';
+    } else {
+      res.innerHTML='<div style="font-size:12px;color:var(--text3)">Aucun problème détecté. Vous pouvez confirmer l\'import.</div>';
+    }
+    document.getElementById('impConfirmBtn').style.display='inline-flex';
+  } else {
+    bar.style.background='var(--danger)';
+    status.innerHTML='<span style="color:var(--danger);font-weight:600"><i class="ti ti-alert-triangle"></i> Fichier invalide</span>';
+    res.innerHTML='<div style="font-size:12px;color:var(--danger);margin-bottom:6px">'+validation.errors.length+' erreur(s) détectée(s) :</div><ul style="font-size:12px;color:var(--text2);padding-left:18px;margin:0;max-height:200px;overflow:auto">'+validation.errors.map(e=>`<li>${e}</li>`).join('')+'</ul>';
+    document.getElementById('impConfirmBtn').style.display='none';
+  }
+}
+function confirmImport(){
+  if(!_pendingImport){ toast('Aucune donnée valide à importer','error'); return; }
+  const data=_pendingImport; _pendingImport=null;
+  closeModal('modalImport');
+  if(typeof applyImportedData==='function') applyImportedData(data);
+}
+
 /** Exporte toutes les données (data.json) en téléchargement. */
 function exportDataJSON(){
   if(!window._storageData){ toast('Données non disponibles','error'); return; }

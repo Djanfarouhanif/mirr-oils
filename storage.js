@@ -244,42 +244,35 @@ function storageImportJSON() {
   input.onchange = async e => {
     const file = e.target.files[0];
     if (!file) return;
-    let parsed;
+    let parsed = null, validation;
     try {
       parsed = JSON.parse(await file.text());
+      validation = validateDataFile(parsed);
     } catch (err) {
       console.error('[Storage] JSON illisible :', err);
-      alert('Fichier illisible : ce n\'est pas du JSON valide.\n\n' + err.message);
-      if (typeof toast === 'function') toast('Import refusé : JSON invalide', 'error');
-      return;
+      validation = { ok: false, errors: ['Fichier illisible : ce n\'est pas du JSON valide. (' + err.message + ')'], warnings: [] };
+      parsed = null;
     }
-
-    // Validation de la structure de données
-    const v = validateDataFile(parsed);
-    if (!v.ok) {
-      const shown = v.errors.slice(0, 12);
-      const extra = v.errors.length > 12 ? `\n… (+${v.errors.length - 12} autre(s) erreur(s))` : '';
-      alert('Fichier de données INVALIDE — import annulé :\n\n• ' + shown.join('\n• ') + extra);
-      if (typeof toast === 'function') toast('Import refusé : fichier invalide', 'error');
-      return;
-    }
-
-    const warn = v.warnings.length ? '\n\nAvertissements :\n• ' + v.warnings.join('\n• ') : '';
-    if (!confirm('Fichier valide ✓\n\nImporter ces données ? Cela REMPLACERA toutes les données actuelles.' + warn)) return;
-
-    try {
-      parsed.meta = parsed.meta || {};
-      parsed.meta.lastSaved = new Date().toISOString();
-      _cacheLocal(parsed);
-      await persistToServer(parsed);   // écrit le fichier importé dans data.json
-      if (typeof toast === 'function') toast('Import réussi ! Rechargement...', 'success');
-      setTimeout(() => location.reload(), 1200);
-    } catch (err) {
-      console.error('[Storage] Import échoué :', err);
-      if (typeof toast === 'function') toast('Échec de l\'enregistrement après import', 'error');
-    }
+    // Affiche le pop-up d'analyse animé (barre + %). Le bouton Confirmer apparaît si valide.
+    if (typeof window.showImportAnalysis === 'function') window.showImportAnalysis(validation, validation.ok ? parsed : null);
+    else if (typeof toast === 'function') toast(validation.ok ? 'Fichier valide' : 'Fichier invalide', validation.ok ? 'success' : 'error');
   };
   input.click();
+}
+
+/** Applique réellement l'import validé : persiste data.json puis recharge. */
+async function applyImportedData(parsed) {
+  try {
+    parsed.meta = parsed.meta || {};
+    parsed.meta.lastSaved = new Date().toISOString();
+    _cacheLocal(parsed);
+    await persistToServer(parsed);   // écrit le fichier importé dans data.json
+    if (typeof toast === 'function') toast('Import réussi ! Rechargement...', 'success');
+    setTimeout(() => location.reload(), 1200);
+  } catch (err) {
+    console.error('[Storage] Import échoué :', err);
+    if (typeof toast === 'function') toast('Échec de l\'enregistrement après import', 'error');
+  }
 }
 
 /**
