@@ -606,7 +606,7 @@ function renderDepenses() {
   const empty=document.getElementById('depEmpty'), tbody=document.getElementById('depBody');
   if(!rows.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  tbody.innerHTML=rows.map(d=>`<tr><td>${fmtD(d.date)}</td><td>${d.desig}</td><td><span class="badge b-default">${d.cat}</span></td><td class="text-right num">${fmt(d.amount)}</td>
+  tbody.innerHTML=rows.map(d=>`<tr><td>${fmtD(d.date)}</td><td>${d.desig}</td><td><span class="badge b-default">${d.cat}</span></td><td>${compteName(d.compteId||defaultCompteId())}</td><td class="text-right num">${fmt(d.amount)}</td>
   <td class="text-center" style="white-space:nowrap"><button class="btn btn-xs" onclick="editDepense(${d.id})"><i class="ti ti-edit"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteDepense(${d.id})"><i class="ti ti-trash"></i></button></td></tr>`).join('');
 }
 function updateDepStats() {
