@@ -262,6 +262,10 @@ function updateSaveIndicator(isoDate) {
     // Coordonnées entreprise (même logique de fusion défauts + data.json)
     window.ENTREPRISE = Object.assign({}, window.ENTREPRISE, data.entreprise || {});
 
+    // Mot de passe d'accès : data.json fait foi ; on met en cache dans localStorage
+    window.APP_PWD = data.password || window.APP_PWD || '1234';
+    try { localStorage.setItem('mirroils_pwd', window.APP_PWD); } catch (e) {}
+
     // Catégories de dépenses
     if (data.categories && data.categories.length) {
       // Vide et repopule le tableau global CATEGORIES

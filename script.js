@@ -40,6 +40,7 @@ function _syncAndSave() {
     window._storageData.nextId     = DB.nextId;
     window._storageData.objectifs = OBJ;
     window._storageData.entreprise = ENTREPRISE;
+    window._storageData.password = APP_PWD;
     window._storageData.categories = [...CATEGORIES];
     storageSave(window._storageData);
   }
@@ -1902,4 +1903,69 @@ function appInit() {
   // Retire le style de boot temporaire (navigate a pose les vraies classes .active)
   const bootStyle = document.getElementById('_bootPage');
   if (bootStyle) bootStyle.remove();
+
+  // Écrit le mot de passe dans data.json s'il n'y est pas encore (une seule fois)
+  if (window._storageData && window._storageData.password == null) _syncAndSave();
 }
+
+// ============================================================
+// VERROUILLAGE — mot de passe d'accès (défaut 1234), session 1h en localStorage
+// ============================================================
+const AUTH_KEY='mirroils_auth';   // horodatage de la dernière connexion réussie
+const PWD_KEY ='mirroils_pwd';    // mot de passe d'accès (par défaut 1234)
+const AUTH_TTL=3600000;           // durée de session : 1 heure (ms)
+
+// Source de vérité = APP_PWD (chargé depuis data.json) ; repli sur le cache localStorage puis 1234.
+function getStoredPwd(){
+  if(typeof APP_PWD!=='undefined' && APP_PWD) return APP_PWD;
+  try{ return localStorage.getItem(PWD_KEY)||'1234'; }catch(e){ return '1234'; }
+}
+
+/** Tente de déverrouiller avec le mot de passe saisi. */
+function tryUnlock(){
+  const inp=document.getElementById('lockPwd');
+  const pwd=inp?inp.value:'';
+  if(pwd===getStoredPwd()){
+    try{ localStorage.setItem(AUTH_KEY,String(Date.now())); }catch(e){}
+    const ls=document.getElementById('lockScreen'); if(ls) ls.style.display='none';
+    const err=document.getElementById('lockError'); if(err) err.style.display='none';
+    if(inp) inp.value='';
+  } else {
+    const err=document.getElementById('lockError'); if(err) err.style.display='block';
+    if(inp){ inp.value=''; inp.focus(); }
+  }
+}
+/** Reverrouille immédiatement (efface la session). */
+function lockNow(){
+  try{ localStorage.removeItem(AUTH_KEY); }catch(e){}
+  const ls=document.getElementById('lockScreen');
+  if(ls){ ls.style.display='flex'; const i=document.getElementById('lockPwd'); if(i){ i.value=''; i.focus(); } }
+}
+/** Vérifie l'expiration de la session : reverrouille si > 1h. */
+function checkAuthExpiry(){
+  try{ const a=localStorage.getItem(AUTH_KEY); if(!a || (Date.now()-parseInt(a,10))>=AUTH_TTL) lockNow(); }catch(e){}
+}
+setInterval(checkAuthExpiry, 60000);   // contrôle chaque minute
+
+/** Change le mot de passe d'accès depuis les Paramètres. */
+function changePassword(){
+  const cur=document.getElementById('pwdCurrent').value;
+  const nw =document.getElementById('pwdNew').value;
+  const cf =document.getElementById('pwdConfirm').value;
+  if(cur!==getStoredPwd()){ toast('Mot de passe actuel incorrect','error'); return; }
+  if(!nw || nw.length<4){ toast('Nouveau mot de passe trop court (min. 4)','error'); return; }
+  if(nw!==cf){ toast('La confirmation ne correspond pas','error'); return; }
+  APP_PWD=nw;                                  // source de vérité
+  try{ localStorage.setItem(PWD_KEY,nw); }catch(e){}   // cache
+  _syncAndSave();                              // persiste dans data.json
+  ['pwdCurrent','pwdNew','pwdConfirm'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='';});
+  toast('Mot de passe modifié !','success');
+}
+
+// Au chargement : focus le champ mot de passe si l'écran de verrouillage est visible
+(function(){
+  const ls=document.getElementById('lockScreen');
+  if(ls && getComputedStyle(ls).display!=='none'){
+    const i=document.getElementById('lockPwd'); if(i) i.focus();
+  }
+})();

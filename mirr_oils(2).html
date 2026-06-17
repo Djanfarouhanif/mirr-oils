@@ -40,8 +40,28 @@
       document.head.appendChild(st);
     }
   } catch(e) {}
+  // Verrouillage : masque l'écran de login si une session est encore valide (< 1h)
+  try {
+    var _auth = localStorage.getItem('mirroils_auth');
+    if (_auth && (Date.now() - parseInt(_auth, 10)) < 3600000) {
+      var lsty = document.createElement('style');
+      lsty.textContent = '#lockScreen{display:none!important}';
+      document.head.appendChild(lsty);
+    }
+  } catch(e) {}
 })();
 </script>
+<!-- ÉCRAN DE VERROUILLAGE (masqué si session < 1h) -->
+<div id="lockScreen" style="position:fixed;inset:0;z-index:99999;background:var(--bg1,#15171c);display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:inherit;color:var(--text,#eee)">
+  <div style="width:64px;height:64px;border-radius:16px;background:var(--primary,#C0392B);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;margin-bottom:16px">M</div>
+  <div style="font-size:20px;font-weight:700;margin-bottom:4px" id="lockTitle">Mirr Oils</div>
+  <div style="font-size:13px;color:var(--text3,#999);margin-bottom:20px">Plateforme protégée — entrez le mot de passe</div>
+  <input type="password" id="lockPwd" placeholder="Mot de passe" autocomplete="current-password"
+    onkeydown="if(event.key==='Enter')tryUnlock()"
+    style="width:240px;padding:10px 12px;border:1px solid var(--border,#333);border-radius:8px;background:var(--bg2,#1e2128);color:var(--text,#eee);font-size:14px;text-align:center">
+  <div id="lockError" style="color:#e74c3c;font-size:12px;height:16px;margin:8px 0;display:none">Mot de passe incorrect</div>
+  <button onclick="tryUnlock()" style="width:240px;padding:10px;border:none;border-radius:8px;background:var(--primary,#C0392B);color:#fff;font-weight:600;cursor:pointer;font-size:14px">Déverrouiller</button>
+</div>
 <div class="app">
 <!-- SIDEBAR -->
 <nav class="sidebar" id="sidebar">
@@ -320,6 +340,18 @@
       <div class="form-row cols-2"><div class="form-group"><label class="lbl">NIF</label><input type="text" id="sNif" placeholder="N° d'identification fiscale"></div><div class="form-group"><label class="lbl">RCCM</label><input type="text" id="sRccm" placeholder="Registre du commerce"></div></div>
       <div class="form-row cols-3"><div class="form-group"><label class="lbl">Obj. CA mensuel (XOF)</label><input type="number" id="sObjCAM"></div><div class="form-group"><label class="lbl">Obj. CA hebdo (XOF)</label><input type="number" id="sObjCAH"></div><div class="form-group"><label class="lbl">Budget depenses max</label><input type="number" id="sObjDep"></div></div>
       <button class="btn btn-primary" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
+    </div>
+    <div class="card mt-16">
+      <div class="card-header"><div class="card-title"><i class="ti ti-lock"></i> Mot de passe d'accès</div></div>
+      <div class="form-row cols-3">
+        <div class="form-group"><label class="lbl">Mot de passe actuel</label><input type="password" id="pwdCurrent" placeholder="défaut : 1234"></div>
+        <div class="form-group"><label class="lbl">Nouveau mot de passe</label><input type="password" id="pwdNew" placeholder="min. 4 caractères"></div>
+        <div class="form-group"><label class="lbl">Confirmer</label><input type="password" id="pwdConfirm"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="changePassword()"><i class="ti ti-key"></i> Modifier le mot de passe</button>
+        <button class="btn" onclick="lockNow()"><i class="ti ti-lock"></i> Verrouiller maintenant</button>
+      </div>
     </div>
   </div>
   <div id="param-apparence" style="display:none">

@@ -22,6 +22,8 @@
 
 
 Définir un mot de passe qui est nécessaire pour pouvoir accéder à la plateforme, pour faire une modification ou suppression on demande le mot de passe. ce mot de passe est configurable depuis le menu paramètre
+<!-- FAIT (accès) : écran de verrouillage au chargement, mdp défaut 1234, session 1h en localStorage (mirroils_auth), modifiable dans Paramètres → "Mot de passe d'accès" (mirroils_pwd), bouton "Verrouiller maintenant". RESTE : demander le mdp pour chaque modification/suppression. -->
+
 
 <!-- Possibilité ajouter, modifier et supprimer les type de client depuis MENU client -->
 <!-- Possibilité ajouter, modifier et supprimer les type de prix depuis MENU client -->

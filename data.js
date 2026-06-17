@@ -21,6 +21,10 @@ var CATEGORIES = [];
 // `var` pour que OBJ === window.OBJ (voir CATEGORIES ci-dessus)
 var OBJ = { caM: 12000000, caH: 3000000, depMax: 250000 };
 
+// Mot de passe d'accès — source persistante = data.json (champ "password").
+// localStorage sert seulement de cache (le verrou s'affiche avant le chargement de data.json).
+var APP_PWD = '1234';
+
 // Coordonnées de l'entreprise (affichées sur les reçus / PDF, éditables en Paramètres)
 var ENTREPRISE = {
   nom:    'Mirr Oils',
