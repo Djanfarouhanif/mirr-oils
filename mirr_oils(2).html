@@ -176,7 +176,7 @@
       <select id="fType" onchange="renderSales()" style="width:auto"><option value="">Tous les types</option><option value="client">Client</option><option value="mecanicien">Mecanicien</option><option value="grossiste">Grossiste</option><option value="coursier">Coursier</option></select>
       <div class="search-bar"><i class="ti ti-search"></i><input type="search" placeholder="Produit, client..." oninput="renderSales()" id="fSearch"></div>
     </div>
-    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Produit</th><th>Qte</th><th>Type prix</th><th>Remise</th><th>Client</th><th class="text-right">Montant (XOF)</th><th class="text-center">Actions</th></tr></thead><tbody id="salesBody"></tbody></table></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Produit</th><th>Qte</th><th>Type prix</th><th>Remise</th><th>Client</th><th class="text-right">Montant (XOF)</th><th>Statut</th><th class="text-center">Actions</th></tr></thead><tbody id="salesBody"></tbody></table></div>
     <div id="salesEmpty" class="empty-state" style="display:none"><i class="ti ti-shopping-cart-off"></i><p>Aucune vente trouvee</p></div>
   </div>
 </div>
@@ -384,7 +384,10 @@
         <div class="form-group"><label class="lbl">Client (repertoire)</label><select id="vClient"><option value="">-- Aucun --</option></select></div>
         <div class="form-group"><label class="lbl">Ou saisir nom libre</label><input type="text" id="vClientName" placeholder="Nom libre"></div>
       </div>
-      <div class="form-group"><label class="lbl">Encaissé sur <span class="req">*</span></label><select id="vCompte"></select></div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="lbl">Moyen de paiement <span class="req">*</span></label><select id="vCompte"></select></div>
+        <div class="form-group"><label class="lbl">Statut facture</label><select id="vStatut"><option value="paye">Payée</option><option value="impaye">Non payée (crédit)</option></select></div>
+      </div>
       <div class="form-group"><label class="lbl">Note</label><textarea id="vNote" placeholder="Remarque optionnelle..."></textarea></div>
     </div>
     <div class="modal-footer">

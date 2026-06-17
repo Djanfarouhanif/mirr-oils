@@ -115,6 +115,7 @@ function openModal(id) {
     document.getElementById('vPriceType').value='client';
     ['vTotalHint','vUnitHint','vPriceHint','vRemiseHint'].forEach(x=>document.getElementById(x).textContent='');
     const vc=document.getElementById('vCompte'); if(vc) vc.value=defaultCompteId();
+    const vs=document.getElementById('vStatut'); if(vs) vs.value='paye';
   }
   if(id==='modalDepense' && !editingDepId) {
     document.getElementById('dDate').value=new Date().toISOString().slice(0,10);
@@ -403,7 +404,8 @@ function saveSale() {
   const amt=parseFloat(document.getElementById('vAmount').value)||0;
   const cli=document.getElementById('vClientName').value||document.getElementById('vClient').value||'--';
   const note=document.getElementById('vNote').value;
-  const compteId=parseInt(document.getElementById('vCompte').value)||defaultCompteId();   // compte encaissé
+  const compteId=parseInt(document.getElementById('vCompte').value)||defaultCompteId();   // moyen de paiement
+  const statut=document.getElementById('vStatut').value||'paye';                          // payée / non payée
   if(!prod||!amt){toast('Produit et montant obligatoires','error');return false;}
 
   // Contrôle de stock : interdit de vendre plus que le stock disponible
@@ -427,14 +429,14 @@ function saveSale() {
       const old=window.DB.sales[idx];
       adjustStock(old.prod, old.qty);   // on remet l'ancienne quantité en stock...
       adjustStock(prod, -qty);          // ...puis on retire la nouvelle (gère changement de produit/qté)
-      window.DB.sales[idx]={...old,date,prod,qty,priceType:pt,unitPrice:unit,remise:rem,clientName:cli,amount:amt,note,compteId};
+      window.DB.sales[idx]={...old,date,prod,qty,priceType:pt,unitPrice:unit,remise:rem,clientName:cli,amount:amt,note,compteId,statut};
     }
     _syncAndSave();
     toast('Vente modifiee et sauvegardee','success');
   } else {
     // CREATE
     adjustStock(prod, -qty);            // sortie de stock
-    window.DB.sales.unshift({id:window.DB.nextId++,date,prod,qty,priceType:pt,unitPrice:unit,remise:rem,clientName:cli,amount:amt,note,compteId});
+    window.DB.sales.unshift({id:window.DB.nextId++,date,prod,qty,priceType:pt,unitPrice:unit,remise:rem,clientName:cli,amount:amt,note,compteId,statut});
     _syncAndSave();
     toast('Vente enregistree !','success');
   }
@@ -491,8 +493,17 @@ function editSale(id) {
     document.getElementById('vClientName').value=s.clientName!=='--'?s.clientName:'';
     document.getElementById('vNote').value=s.note;
     document.getElementById('vCompte').value=s.compteId||defaultCompteId();
+    document.getElementById('vStatut').value=s.statut||'paye';
     calcSaleTotal();
   },60);
+}
+
+/** Marque une vente (facture) comme payée et met à jour la trésorerie. */
+function markSalePaid(id) {
+  const s=window.DB.sales.find(x=>x.id===id); if(!s)return;
+  s.statut='paye';
+  _syncAndSave();
+  renderSales(); updateSaleStats(); refreshDashboard(); toast('Facture marquée payée','success');
 }
 
 /** DELETE VENTE + persistance JSON */
@@ -519,7 +530,11 @@ function renderSales() {
   empty.style.display='none';
   tbody.innerHTML=rows.map(s=>{
     const sn=JSON.stringify(s.prod),scl=JSON.stringify(s.clientName),sd=JSON.stringify(fmtD(s.date));
-    return`<tr><td>${fmtD(s.date)}</td><td>${s.prod}</td><td class="num">${s.qty}</td><td>${catBadge(s.priceType)}</td><td class="num ${s.remise>0?'text-warning':''}">${s.remise>0?'-'+fmt(s.remise):'--'}</td><td>${s.clientName!=='--'?s.clientName:'--'}</td><td class="text-right num fw-600">${fmt(s.amount)}</td>
+    const paye=(s.statut||'paye')==='paye';
+    const statutCell=paye
+      ? '<span class="badge b-success">Payée</span>'
+      : `<span class="badge b-danger">Non payée</span> <button class="btn btn-xs" onclick="markSalePaid(${s.id})" title="Marquer comme payée"><i class="ti ti-check"></i></button>`;
+    return`<tr><td>${fmtD(s.date)}</td><td>${s.prod}</td><td class="num">${s.qty}</td><td>${catBadge(s.priceType)}</td><td class="num ${s.remise>0?'text-warning':''}">${s.remise>0?'-'+fmt(s.remise):'--'}</td><td>${s.clientName!=='--'?s.clientName:'--'}</td><td class="text-right num fw-600">${fmt(s.amount)}</td><td style="white-space:nowrap">${statutCell}</td>
     <td class="text-center" style="white-space:nowrap">
       <button class="btn btn-xs" onclick='showReceipt({prod:${sn},qty:${s.qty},priceType:"${s.priceType}",unitPrice:${s.unitPrice},remise:${s.remise||0},amount:${s.amount},clientName:${scl},date:${sd}})'><i class="ti ti-receipt"></i></button>
       <button class="btn btn-xs" onclick="editSale(${s.id})"><i class="ti ti-edit"></i></button>
@@ -1312,7 +1327,7 @@ function getCompteSolde(compteId) {
   if(!c) return 0;
   let s=c.soldeInitial||0;
   const def=defaultCompteId();
-  window.DB.sales.forEach(v=>{ if((v.compteId||def)===compteId) s+=v.amount; });        // encaissements ventes
+  window.DB.sales.forEach(v=>{ if((v.compteId||def)===compteId && (v.statut||'paye')==='paye') s+=v.amount; });   // encaissements ventes PAYÉES
   window.DB.depenses.forEach(d=>{ if((d.compteId||def)===compteId) s-=d.amount; });      // décaissements dépenses
   (window.DB.tresorerie||[]).forEach(m=>{
     if(m.sens==='entree'  && m.compteId===compteId) s+=m.amount;
@@ -1326,7 +1341,8 @@ function getCompteSolde(compteId) {
 function buildTresoMouvements() {
   const def=defaultCompteId();
   const list=[];
-  window.DB.sales.forEach(v=>list.push({date:v.date,compteId:v.compteId||def,sens:'entree',amount:v.amount,motif:'Vente — '+v.prod,source:'Vente',srcType:'vente',refId:v.id}));
+  window.DB.sales.forEach(v=>{ if((v.statut||'paye')!=='paye') return;   // seules les ventes payées entrent en trésorerie
+    list.push({date:v.date,compteId:v.compteId||def,sens:'entree',amount:v.amount,motif:'Vente — '+v.prod,source:'Vente',srcType:'vente',refId:v.id}); });
   window.DB.depenses.forEach(d=>list.push({date:d.date,compteId:d.compteId||def,sens:'sortie',amount:d.amount,motif:d.desig||d.cat,source:'Dépense',srcType:'depense',refId:d.id}));
   (window.DB.tresorerie||[]).forEach(m=>{
     if(m.sens==='transfert'){
@@ -1353,7 +1369,7 @@ function renderTresorerie() {
   ensureDefaultComptes();
   fillCompteSelectors();
   const total=window.DB.comptes.reduce((a,c)=>a+getCompteSolde(c.id),0);
-  const totIn=window.DB.sales.reduce((a,v)=>a+v.amount,0)+(window.DB.tresorerie||[]).filter(m=>m.sens==='entree').reduce((a,m)=>a+m.amount,0);
+  const totIn=window.DB.sales.filter(v=>(v.statut||'paye')==='paye').reduce((a,v)=>a+v.amount,0)+(window.DB.tresorerie||[]).filter(m=>m.sens==='entree').reduce((a,m)=>a+m.amount,0);
   const totOut=window.DB.depenses.reduce((a,d)=>a+d.amount,0)+(window.DB.tresorerie||[]).filter(m=>m.sens==='sortie').reduce((a,m)=>a+m.amount,0);
   document.getElementById('treso-total').textContent=fmt(total);
   document.getElementById('treso-in').textContent=fmt(totIn);

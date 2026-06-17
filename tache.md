@@ -8,7 +8,9 @@
 Ajouter les statistiques de vente effectuer par client
 
 
-Enregistrement d'une vente, ajouter le champ de moyen de paiement, un autre champ qui implique si la facture est payé ou pas
+<!-- Enregistrement d'une vente, ajouter le champ de moyen de paiement, un autre champ qui implique si la facture est payé ou pas -->
+<!-- FAIT : champ "Moyen de paiement" (vCompte) + "Statut facture" payée/non payée (vStatut). Une vente non payée n'entre pas en trésorerie ; bouton "marquer payée" dans la liste. -->
+
 
 <!-- Enregistrement d'une dépense, ajouter le champ de moyen de décaissement -->
 <!-- FAIT : champ "Payé depuis" (id=dCompte) dans le formulaire Dépense -->
