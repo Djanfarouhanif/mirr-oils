@@ -28,7 +28,10 @@ Définir un mot de passe qui est nécessaire pour pouvoir accéder à la platefo
 <!-- FAIT : menu Client → bouton "Gérer les types" (modal) : CRUD types de client + types de prix. Onglets/compteurs et listes déroulantes dynamiques. Suppression bloquée si type utilisé. -->
 
 
-Possibilité de définir les objectifs individuellement pour chaque semaine et chaque mois mais par défaut ça prend l'objectif définit par défaut de façon globale
+<!-- Possibilité de définir les objectifs individuellement pour chaque semaine et chaque mois mais par défaut ça prend l'objectif définit par défaut de façon globale -->
+<!-- FAIT : page Objectifs → tables "Suivi semaine/mois" avec Obj. CA éditable par ligne. Surcharge stockée (objWeek/objMonth) ; vide ou = global => repli sur objectif global. Reports utilisent ces valeurs. -->
+
+
 Dans les options de paramètre ajouter le logo et le nom à afficher
 Possibilité de faire des exports en excel
 export format json import format json

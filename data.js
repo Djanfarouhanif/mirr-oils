@@ -46,6 +46,8 @@ var DB = {
   tresorerie:   [],   // mouvements de trésorerie MANUELS (dépôts, transferts, ajustements)
   clientTypes:  [],   // catégories de client (client, mécanicien, grossiste…) — éditables
   priceTypes:   [],   // catégories de prix (client, mécanicien, grossiste…) — éditables
+  objWeek:      {},   // objectifs CA spécifiques par semaine  { 'YYYY-MM-DD'(lundi): montant }
+  objMonth:     {},   // objectifs CA spécifiques par mois     { 'YYYY-MM': montant }
   nextId:       200,
   clientFilter: ''
 };

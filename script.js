@@ -35,6 +35,8 @@ function _syncAndSave() {
     window._storageData.tresorerie = DB.tresorerie;
     window._storageData.clientTypes= DB.clientTypes;
     window._storageData.priceTypes = DB.priceTypes;
+    window._storageData.objWeek    = DB.objWeek;
+    window._storageData.objMonth   = DB.objMonth;
     window._storageData.nextId     = DB.nextId;
     window._storageData.objectifs = OBJ;
     window._storageData.entreprise = ENTREPRISE;
@@ -1127,6 +1129,26 @@ function _monthsWithData() {
  * @param {string} mondayISO date du lundi 'YYYY-MM-DD'
  * @returns {Object|null} même structure que l'ancien WEEK_DATA[key]
  */
+// Objectif CA d'une semaine/mois : valeur spécifique si définie, sinon objectif global.
+function getWeekObjectif(mondayISO){ const v=(window.DB.objWeek||{})[mondayISO]; return (v!=null&&v!=='')?v:OBJ.caH; }
+function getMonthObjectif(monthKey){ const v=(window.DB.objMonth||{})[monthKey]; return (v!=null&&v!=='')?v:OBJ.caM; }
+function hasWeekObjectif(mondayISO){ return (window.DB.objWeek||{})[mondayISO]!=null; }
+function hasMonthObjectif(monthKey){ return (window.DB.objMonth||{})[monthKey]!=null; }
+/** Définit/efface l'objectif spécifique d'une semaine (vide ou = global => repli global). */
+function setWeekObjectif(mondayISO,val){
+  const n=parseFloat(val)||0;
+  if(!n || n===OBJ.caH){ delete window.DB.objWeek[mondayISO]; } else { window.DB.objWeek[mondayISO]=n; }
+  _syncAndSave(); renderObjectifsSuivi();
+  if(document.getElementById('page-rapports').classList.contains('active')) loadWeekReport();
+}
+/** Définit/efface l'objectif spécifique d'un mois (vide ou = global => repli global). */
+function setMonthObjectif(monthKey,val){
+  const n=parseFloat(val)||0;
+  if(!n || n===OBJ.caM){ delete window.DB.objMonth[monthKey]; } else { window.DB.objMonth[monthKey]=n; }
+  _syncAndSave(); renderObjectifsMois();
+  if(document.getElementById('page-rapports').classList.contains('active')) loadMonthReport();
+}
+
 function computeWeekData(mondayISO) {
   if (!mondayISO) return null;
   const monday = _dateOf(mondayISO);
@@ -1167,7 +1189,7 @@ function computeWeekData(mondayISO) {
 
   return {
     label: 'S' + _weekNumInMonth(monday) + ' — ' + fmtD(mondayISO) + ' au ' + fmtD(fridayISO) + '/' + year,
-    ca, dep, net: ca - dep, jours, objCA: OBJ.caH,
+    ca, dep, net: ca - dep, jours, objCA: getWeekObjectif(mondayISO),
     days, depenses, prodSynth
   };
 }
@@ -1226,7 +1248,7 @@ function computeMonthData(monthKey) {
   const M = ['Janvier', 'Fevrier', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Aout', 'Septembre', 'Octobre', 'Novembre', 'Decembre'];
   return {
     label: M[parseInt(monthKey.slice(5, 7)) - 1] + ' ' + monthKey.slice(0, 4),
-    ca, dep, net: ca - dep, objCA: OBJ.caM,
+    ca, dep, net: ca - dep, objCA: getMonthObjectif(monthKey),
     weeks, topProds, depByCat
   };
 }
@@ -1722,22 +1744,43 @@ function syncObjectifsUI() {
   setV('oCAM',OBJ.caM); setV('oCAH',OBJ.caH); setV('oDep',OBJ.depMax);
   setV('sObjCAM',OBJ.caM); setV('sObjCAH',OBJ.caH); setV('sObjDep',OBJ.depMax);
   renderObjectifsSuivi();
+  renderObjectifsMois();
 }
 
-/** Suivi semaine par semaine : objectif (OBJ.caH) vs CA réel, calculé depuis les ventes. */
+/** Suivi semaine par semaine : objectif (spécifique ou global) éditable vs CA réel. */
 function renderObjectifsSuivi() {
   const body=document.getElementById('objSuiviBody');
   if(!body)return;
   const weeks=_weeksWithData();   // lundis ayant des données (récent → ancien)
-  const obj=OBJ.caH||0;
   if(!weeks.length){body.innerHTML='<tr><td colspan="5" class="text-center text-muted" style="padding:16px">Aucune donnée</td></tr>';return;}
   body.innerHTML=weeks.slice().reverse().map(mon=>{   // ordre chronologique
     const d=computeWeekData(mon);
+    const obj=d.objCA||0;
     const ca=d.ca, ecart=ca-obj, taux=obj?Math.round(ca/obj*100):0;
     const badge=taux>=100?'b-success':taux>=80?'b-warning':'b-danger';
     const ec=ecart>=0?'text-success':'text-danger';
+    const perso=hasWeekObjectif(mon);
     const lbl=d.label.split(' — ')[0]+' - '+fmtD(mon);
-    return `<tr><td>${lbl}</td><td class="text-right num">${fmt(obj)}</td><td class="text-right num ${ca>=obj?'fw-600':''}">${fmt(ca)}</td><td class="text-right num ${ec}">${ecart>=0?'+':''}${fmt(ecart)}</td><td class="text-right"><span class="badge ${badge}">${taux}%</span></td></tr>`;
+    const objCell=`<input type="number" value="${obj}" onchange="setWeekObjectif('${mon}',this.value)" style="width:120px;text-align:right" title="${perso?'Objectif spécifique':'Objectif global par défaut'}">${perso?' <span class="badge b-warning" style="font-size:9px">perso</span>':''}`;
+    return `<tr><td>${lbl}</td><td class="text-right">${objCell}</td><td class="text-right num ${ca>=obj?'fw-600':''}">${fmt(ca)}</td><td class="text-right num ${ec}">${ecart>=0?'+':''}${fmt(ecart)}</td><td class="text-right"><span class="badge ${badge}">${taux}%</span></td></tr>`;
+  }).join('');
+}
+
+/** Suivi mois par mois : objectif (spécifique ou global) éditable vs CA réel. */
+function renderObjectifsMois() {
+  const body=document.getElementById('objMoisBody');
+  if(!body)return;
+  const months=_monthsWithData();   // mois ayant des données (récent → ancien)
+  if(!months.length){body.innerHTML='<tr><td colspan="5" class="text-center text-muted" style="padding:16px">Aucune donnée</td></tr>';return;}
+  body.innerHTML=months.slice().reverse().map(mk=>{   // ordre chronologique
+    const d=computeMonthData(mk);
+    const obj=d.objCA||0;
+    const ca=d.ca, ecart=ca-obj, taux=obj?Math.round(ca/obj*100):0;
+    const badge=taux>=100?'b-success':taux>=80?'b-warning':'b-danger';
+    const ec=ecart>=0?'text-success':'text-danger';
+    const perso=hasMonthObjectif(mk);
+    const objCell=`<input type="number" value="${obj}" onchange="setMonthObjectif('${mk}',this.value)" style="width:130px;text-align:right" title="${perso?'Objectif spécifique':'Objectif global par défaut'}">${perso?' <span class="badge b-warning" style="font-size:9px">perso</span>':''}`;
+    return `<tr><td>${d.label}</td><td class="text-right">${objCell}</td><td class="text-right num ${ca>=obj?'fw-600':''}">${fmt(ca)}</td><td class="text-right num ${ec}">${ecart>=0?'+':''}${fmt(ecart)}</td><td class="text-right"><span class="badge ${badge}">${taux}%</span></td></tr>`;
   }).join('');
 }
 

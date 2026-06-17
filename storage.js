@@ -249,6 +249,8 @@ function updateSaveIndicator(isoDate) {
       tresorerie: data.tresorerie  || [],
       clientTypes:data.clientTypes || [],
       priceTypes: data.priceTypes  || [],
+      objWeek:    data.objWeek     || {},
+      objMonth:   data.objMonth    || {},
       nextId:     data.nextId      || 200,
       clientFilter: ''
     };
