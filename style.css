@@ -85,7 +85,7 @@ textarea{resize:vertical;min-height:70px;line-height:1.5}input[type=color]{paddi
 /* MODALS */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:200;padding:16px}
 .modal-overlay.open{display:flex}.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-xl);width:100%;max-width:540px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.modal-sm{max-width:420px}.modal-lg{max-width:700px}
+.modal-sm{max-width:420px}.modal-lg{max-width:700px}.modal-xl{max-width: 900px;}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
 .modal-title{font-size:15px;font-weight:600}.modal-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;padding:4px;border-radius:6px;line-height:1;transition:var(--transition)}.modal-close:hover{background:var(--bg3);color:var(--text)}
 .modal-body{padding:20px;overflow-y:auto;flex:1}.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
