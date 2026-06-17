@@ -260,20 +260,15 @@
   <div class="card mb-16">
     <div class="card-header"><div class="card-title"><i class="ti ti-target"></i> Objectifs commerciaux</div><button class="btn btn-primary" onclick="openModal('modalObjectif')"><i class="ti ti-edit"></i> Modifier</button></div>
     <div class="g3" style="margin-bottom:0">
-      <div class="metric m-blue"><div class="metric-label">Obj. CA mensuel</div><div class="metric-value" id="obj-ca-m">12 000 000</div><div class="metric-sub">XOF</div></div>
-      <div class="metric m-blue"><div class="metric-label">Obj. CA hebdo</div><div class="metric-value" id="obj-ca-h">3 000 000</div><div class="metric-sub">XOF</div></div>
-      <div class="metric m-blue"><div class="metric-label">Budget depenses max</div><div class="metric-value" id="obj-dep">250 000</div><div class="metric-sub">XOF / mois</div></div>
+      <div class="metric m-blue"><div class="metric-label">Obj. CA mensuel</div><div class="metric-value" id="obj-ca-m">—</div><div class="metric-sub">XOF</div></div>
+      <div class="metric m-blue"><div class="metric-label">Obj. CA hebdo</div><div class="metric-value" id="obj-ca-h">—</div><div class="metric-sub">XOF</div></div>
+      <div class="metric m-blue"><div class="metric-label">Budget depenses max</div><div class="metric-value" id="obj-dep">—</div><div class="metric-sub">XOF / mois</div></div>
     </div>
   </div>
   <div class="card">
     <div class="card-header"><div class="card-title">Suivi semaine par semaine</div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Semaine</th><th class="text-right">Obj. CA</th><th class="text-right">CA realise</th><th class="text-right">Ecart</th><th class="text-right">Taux</th></tr></thead>
-    <tbody>
-      <tr><td>S1 - 02/06</td><td class="text-right num">3 000 000</td><td class="text-right num">2 850 000</td><td class="text-right num text-danger">-150 000</td><td class="text-right"><span class="badge b-warning">95%</span></td></tr>
-      <tr><td>S2 - 08/06</td><td class="text-right num">3 000 000</td><td class="text-right num fw-600">3 739 000</td><td class="text-right num text-success">+739 000</td><td class="text-right"><span class="badge b-success">124,6%</span></td></tr>
-      <tr><td>S3 - 16/06</td><td class="text-right num">3 000 000</td><td class="text-right num">1 620 000</td><td class="text-right num text-danger">-1 380 000</td><td class="text-right"><span class="badge b-danger">54%</span></td></tr>
-      <tr><td>S4 - 23/06</td><td class="text-right num">3 000 000</td><td class="text-right num">2 190 000</td><td class="text-right num text-danger">-810 000</td><td class="text-right"><span class="badge b-warning">73%</span></td></tr>
-    </tbody></table></div>
+    <tbody id="objSuiviBody"></tbody></table></div>
   </div>
 </div>
 <!-- PAGE: PARAMETRES -->
@@ -289,7 +284,7 @@
       <div class="form-row cols-2"><div class="form-group"><label class="lbl">Nom plateforme</label><input type="text" id="sName" value="Mirr Oils"></div><div class="form-group"><label class="lbl">Slogan</label><input type="text" value="Distribution Huiles Moteur &amp; Lubrifiants"></div></div>
       <div class="form-row cols-2"><div class="form-group"><label class="lbl">Telephone</label><input type="tel" value="+228 00 00 00 00"></div><div class="form-group"><label class="lbl">Email</label><input type="email" value="contact@mirroils.tg"></div></div>
       <div class="form-group"><label class="lbl">Adresse</label><input type="text" value="BP 1234, Lome, Togo"></div>
-      <div class="form-row cols-3"><div class="form-group"><label class="lbl">Obj. CA mensuel (XOF)</label><input type="number" id="sObjCAM" value="12000000"></div><div class="form-group"><label class="lbl">Obj. CA hebdo (XOF)</label><input type="number" id="sObjCAH" value="3000000"></div><div class="form-group"><label class="lbl">Budget depenses max</label><input type="number" id="sObjDep" value="250000"></div></div>
+      <div class="form-row cols-3"><div class="form-group"><label class="lbl">Obj. CA mensuel (XOF)</label><input type="number" id="sObjCAM"></div><div class="form-group"><label class="lbl">Obj. CA hebdo (XOF)</label><input type="number" id="sObjCAH"></div><div class="form-group"><label class="lbl">Budget depenses max</label><input type="number" id="sObjDep"></div></div>
       <button class="btn btn-primary" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
     </div>
   </div>
@@ -465,9 +460,9 @@
   <div class="modal modal-sm">
     <div class="modal-header"><span class="modal-title"><i class="ti ti-target" style="margin-right:8px;color:var(--primary)"></i>Modifier les objectifs</span><button class="modal-close" onclick="closeModal('modalObjectif')">x</button></div>
     <div class="modal-body">
-      <div class="form-group"><label class="lbl">Obj. CA mensuel (XOF)</label><input type="number" id="oCAM" value="12000000"></div>
-      <div class="form-group"><label class="lbl">Obj. CA hebdomadaire (XOF)</label><input type="number" id="oCAH" value="3000000"></div>
-      <div class="form-group"><label class="lbl">Budget depenses max/mois (XOF)</label><input type="number" id="oDep" value="250000"></div>
+      <div class="form-group"><label class="lbl">Obj. CA mensuel (XOF)</label><input type="number" id="oCAM"></div>
+      <div class="form-group"><label class="lbl">Obj. CA hebdomadaire (XOF)</label><input type="number" id="oCAH"></div>
+      <div class="form-group"><label class="lbl">Budget depenses max/mois (XOF)</label><input type="number" id="oDep"></div>
       <div class="form-group"><label class="lbl">Obj. CA annuel (XOF)</label><input type="number" value="144000000"></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeModal('modalObjectif')">Annuler</button><button class="btn btn-primary" onclick="saveObjectifs()"><i class="ti ti-device-floppy"></i> Sauvegarder</button></div>

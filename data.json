@@ -2,12 +2,12 @@
   "meta": {
     "version": "1.0",
     "app": "Mirr Oils",
-    "lastSaved": "2026-06-17T11:31:03.193Z"
+    "lastSaved": "2026-06-17T11:41:17.749Z"
   },
   "objectifs": {
-    "caM": 12000000,
-    "caH": 3000000,
-    "depMax": 250000
+    "caM": 1000000,
+    "caH": 1000000,
+    "depMax": 45000
   },
   "categories": [
     "Carburant vehicule",

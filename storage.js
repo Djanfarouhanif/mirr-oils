@@ -249,10 +249,9 @@ function updateSaveIndicator(isoDate) {
       clientFilter: ''
     };
 
-    // Objectifs
-    if (data.objectifs) {
-      window.OBJ = data.objectifs;
-    }
+    // Objectifs : on part des défauts (data.js) et on applique ceux de data.json.
+    // Une clé absente de data.json garde donc une valeur de repli valide.
+    window.OBJ = Object.assign({}, window.OBJ, data.objectifs || {});
 
     // Catégories de dépenses
     if (data.categories && data.categories.length) {

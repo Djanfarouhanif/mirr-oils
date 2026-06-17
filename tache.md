@@ -3,7 +3,8 @@
 <!-- ajouter la section Stock puis les récuperer dynamiquement -->
 <!-- gere côté raport dynamiquement -->
 <!-- Corriger le format des chiffres sur le pdf -->
-Gestion des produits, ajouter les images de chaque produit
+<!-- Gestion des produits, ajouter les images de chaque produit -->
+
 Ajouter les statistiques de vente effectuer par client
 
 

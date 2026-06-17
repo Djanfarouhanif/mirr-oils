@@ -46,6 +46,7 @@ function navigate(page) {
   if(page==='clients')    { renderClients(); updateClientCounts(); }
   if(page==='produits')   renderProduits();
   if(page==='rapports')   { populateReportSelectors(); loadWeekReport(); loadMonthReport(); }
+  if(page==='objectifs' || page==='parametres') syncObjectifsUI();
 }
 document.querySelectorAll('.nav-item').forEach(i=>i.addEventListener('click',()=>navigate(i.dataset.page)));
 
@@ -123,6 +124,9 @@ function openModal(id) {
     document.getElementById('pPC').value='';
     document.getElementById('pStock').value='0';
     clearProductPhoto();
+  }
+  if(id==='modalObjectif') {
+    syncObjectifsUI();   // pré-remplit le formulaire avec les objectifs réels (data.json)
   }
 }
 function closeModal(id) {
@@ -1270,13 +1274,42 @@ function generateReceiptPDF() {
 // ============================================================
 // OBJECTIFS & PARAMETRES — avec persistance JSON
 // ============================================================
+/**
+ * Synchronise tout l'UI des objectifs depuis OBJ (chargé depuis data.json).
+ * Met à jour l'affichage (page Objectifs) ET les champs des formulaires
+ * (modal Objectifs + Paramètres) — plus aucune valeur codée en dur.
+ */
+function syncObjectifsUI() {
+  const setT=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=fmt(v);};
+  setT('obj-ca-m',OBJ.caM); setT('obj-ca-h',OBJ.caH); setT('obj-dep',OBJ.depMax);
+  const setV=(id,v)=>{const e=document.getElementById(id); if(e) e.value=v;};
+  setV('oCAM',OBJ.caM); setV('oCAH',OBJ.caH); setV('oDep',OBJ.depMax);
+  setV('sObjCAM',OBJ.caM); setV('sObjCAH',OBJ.caH); setV('sObjDep',OBJ.depMax);
+  renderObjectifsSuivi();
+}
+
+/** Suivi semaine par semaine : objectif (OBJ.caH) vs CA réel, calculé depuis les ventes. */
+function renderObjectifsSuivi() {
+  const body=document.getElementById('objSuiviBody');
+  if(!body)return;
+  const weeks=_weeksWithData();   // lundis ayant des données (récent → ancien)
+  const obj=OBJ.caH||0;
+  if(!weeks.length){body.innerHTML='<tr><td colspan="5" class="text-center text-muted" style="padding:16px">Aucune donnée</td></tr>';return;}
+  body.innerHTML=weeks.slice().reverse().map(mon=>{   // ordre chronologique
+    const d=computeWeekData(mon);
+    const ca=d.ca, ecart=ca-obj, taux=obj?Math.round(ca/obj*100):0;
+    const badge=taux>=100?'b-success':taux>=80?'b-warning':'b-danger';
+    const ec=ecart>=0?'text-success':'text-danger';
+    const lbl=d.label.split(' — ')[0]+' - '+fmtD(mon);
+    return `<tr><td>${lbl}</td><td class="text-right num">${fmt(obj)}</td><td class="text-right num ${ca>=obj?'fw-600':''}">${fmt(ca)}</td><td class="text-right num ${ec}">${ecart>=0?'+':''}${fmt(ecart)}</td><td class="text-right"><span class="badge ${badge}">${taux}%</span></td></tr>`;
+  }).join('');
+}
+
 function saveObjectifs() {
-  OBJ.caM=parseFloat(document.getElementById('oCAM').value)||12000000;
-  OBJ.caH=parseFloat(document.getElementById('oCAH').value)||3000000;
-  OBJ.depMax=parseFloat(document.getElementById('oDep').value)||250000;
-  document.getElementById('obj-ca-m').textContent=fmt(OBJ.caM);
-  document.getElementById('obj-ca-h').textContent=fmt(OBJ.caH);
-  document.getElementById('obj-dep').textContent=fmt(OBJ.depMax);
+  OBJ.caM=parseFloat(document.getElementById('oCAM').value)||OBJ.caM;
+  OBJ.caH=parseFloat(document.getElementById('oCAH').value)||OBJ.caH;
+  OBJ.depMax=parseFloat(document.getElementById('oDep').value)||OBJ.depMax;
+  syncObjectifsUI();
   _syncAndSave();
   closeModal('modalObjectif'); toast('Objectifs mis a jour !','success');
 }
@@ -1293,6 +1326,7 @@ function saveSettings() {
   OBJ.caM=parseFloat(document.getElementById('sObjCAM').value)||OBJ.caM;
   OBJ.caH=parseFloat(document.getElementById('sObjCAH').value)||OBJ.caH;
   OBJ.depMax=parseFloat(document.getElementById('sObjDep').value)||OBJ.depMax;
+  syncObjectifsUI();
   _syncAndSave();
   toast('Parametres sauvegardes !','success');
 }
@@ -1347,6 +1381,7 @@ function appInit() {
   renderClients(); updateClientCounts();
   renderProduits();
   refreshDashboard();
+  syncObjectifsUI();
   loadWeekReport();
   loadMonthReport();
 
