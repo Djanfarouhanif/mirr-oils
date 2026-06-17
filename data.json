@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "app": "Mirr Oils",
-    "lastSaved": "2026-06-16T21:07:03.456Z"
+    "lastSaved": "2026-06-16T21:09:57.031Z"
   },
   "objectifs": {
     "caM": 12000000,
@@ -19,27 +19,15 @@
   ],
   "sales": [
     {
-      "id": 201,
-      "date": "2026-06-16",
-      "prod": "10W40 (4x4L)",
-      "qty": 22,
-      "priceType": "grossiste",
-      "unitPrice": 12000,
-      "remise": 0,
-      "clientName": "--",
-      "amount": 264000,
-      "note": ""
-    },
-    {
       "id": 200,
       "date": "2026-06-16",
       "prod": "XDEO SAE 50 Fut 200L",
       "qty": 0.5,
-      "priceType": "mecanicien",
-      "unitPrice": 355000,
+      "priceType": "client",
+      "unitPrice": 370000,
       "remise": 0,
       "clientName": "--",
-      "amount": 177500,
+      "amount": 185000,
       "note": ""
     },
     {
@@ -64,18 +52,6 @@
       "remise": 0,
       "clientName": "--",
       "amount": 42000,
-      "note": ""
-    },
-    {
-      "id": 3,
-      "date": "2026-06-08",
-      "prod": "10W40 (4x4L)",
-      "qty": 2,
-      "priceType": "client",
-      "unitPrice": 13200,
-      "remise": 0,
-      "clientName": "--",
-      "amount": 26400,
       "note": ""
     },
     {
@@ -112,18 +88,6 @@
       "remise": 0,
       "clientName": "--",
       "amount": 79200,
-      "note": ""
-    },
-    {
-      "id": 7,
-      "date": "2026-06-08",
-      "prod": "XDEO SAE 50 Seau 20L",
-      "qty": 2,
-      "priceType": "grossiste",
-      "unitPrice": 48500,
-      "remise": 0,
-      "clientName": "GDM Sarl",
-      "amount": 97000,
       "note": ""
     },
     {
@@ -580,17 +544,6 @@
     }
   ],
   "produits": [
-    {
-      "id": 1,
-      "name": "XDEO SAE 50 Fut 200L",
-      "cond": "Fut 200L",
-      "pc": 370000,
-      "pm": 355000,
-      "pg": 340000,
-      "unit": "fut",
-      "stock": 12,
-      "alerte": 2
-    },
     {
       "id": 2,
       "name": "T-cross 4T (12x1L)",
