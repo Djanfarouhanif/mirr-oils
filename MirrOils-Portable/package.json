@@ -1,0 +1,8 @@
+{
+  "name": "mirr-oils",
+  "version": "1.0.0",
+  "description": "Gestion Mirr Oils — serveur local qui persiste data.json",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

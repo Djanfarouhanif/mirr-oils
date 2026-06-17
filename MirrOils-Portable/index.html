@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mirr Oils — Gestion Commerciale</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="simple-logo.png">
+</head>
+<body data-theme="dark">
+<script>
+// Restaure le theme + la couleur + la page active AVANT le rendu (evite le flash du theme/dashboard par defaut)
+(function(){
+  try {
+    var t = localStorage.getItem('mirroils_theme');
+    if (t) document.body.setAttribute('data-theme', t);
+    var raw = localStorage.getItem('mirroils_color');
+    if (raw) {
+      var col = JSON.parse(raw);
+      var r = document.documentElement.style;
+      r.setProperty('--primary', col.c);
+      r.setProperty('--primary-dark', col.cd || col.c);
+      r.setProperty('--primary-bg', 'rgba('+parseInt(col.c.slice(1,3),16)+','+parseInt(col.c.slice(3,5),16)+','+parseInt(col.c.slice(5,7),16)+',.09)');
+    }
+    // Page active : injecte un style temporaire pour afficher la bonne page sans flash dashboard
+    var PAGES = ['dashboard','stats','ventes','depenses','clients','produits','tresorerie','rapports','objectifs','parametres'];
+    var page = localStorage.getItem('mirroils_page');
+    if (page && page !== 'dashboard' && PAGES.indexOf(page) !== -1) {
+      var st = document.createElement('style');
+      st.id = '_bootPage';
+      st.textContent =
+        '.page{display:none!important}' +
+        '#page-' + page + '{display:block!important}' +
+        '.nav-item.active{background:transparent!important;color:var(--text2)!important;font-weight:400!important}' +
+        '.nav-item.active::before{display:none!important}' +
+        '.nav-item[data-page="' + page + '"]{background:var(--primary-bg)!important;color:var(--primary)!important;font-weight:500!important}' +
+        '.nav-item[data-page="' + page + '"]::before{content:""!important;display:block!important;position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--primary);border-radius:0 3px 3px 0}';
+      document.head.appendChild(st);
+    }
+  } catch(e) {}
+  // Verrouillage : session valide (<1h) => on masque le verrou ; sinon on masque
+  // toute l'application (pas seulement le verrou) pour empêcher tout contournement.
+  try {
+    var _auth = localStorage.getItem('mirroils_auth');
+    var _ok = _auth && (Date.now() - parseInt(_auth, 10)) < 3600000;
+    var lsty = document.createElement('style');
+    if (_ok) { lsty.id = '_lockHide';     lsty.textContent = '#lockScreen{display:none!important}'; }
+    else     { lsty.id = '_appLockStyle'; lsty.textContent = '.app{display:none!important}'; }
+    document.head.appendChild(lsty);
+  } catch(e) {}
+})();
+</script>
+<!-- ÉCRAN DE VERROUILLAGE (masqué si session < 1h) -->
+<div id="lockScreen" style="position:fixed;inset:0;z-index:99999;background:var(--bg1,#15171c);display:flex;align-items:center;justify-content:center">
+  <div class="lock-card">
+    <div class="lock-mark">M</div>
+    <div class="lock-title" id="lockTitle">Mirr Oils</div>
+    <div class="lock-sub">Plateforme protégée — entrez le mot de passe</div>
+    <div class="lock-field">
+      <i class="ti ti-lock"></i>
+      <input type="password" id="lockPwd" placeholder="Mot de passe" autocomplete="current-password" onkeydown="if(event.key==='Enter')tryUnlock()">
+    </div>
+    <div class="lock-error" id="lockError" style="display:none">Mot de passe incorrect</div>
+    <button class="lock-btn" onclick="tryUnlock()"><i class="ti ti-lock-open"></i> Déverrouiller</button>
+  </div>
+</div>
+<div class="app">
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="logo-wrap">
+    <!-- Logo de repli : affiché uniquement si les images logo.png / simple-logo.png sont absentes -->
+    <div class="logo-default" id="logoDefault" style="display:none">
+      <div class="logo-mark" id="logoMark">M</div>
+      <div class="logo-text"><div class="logo-name" id="appName">Mirr Oils</div><div class="logo-tagline">Gestion commerciale</div></div>
+    </div>
+    <!-- Images (importées ou fichiers par défaut). onerror => repli sur le bloc ci-dessus -->
+    <img src="logo.png" class="logo-full" id="sideLogoFull" alt="Mirr Oils" onerror="window.useDefaultLogo&&useDefaultLogo()">
+    <img src="simple-logo.png" class="logo-simple" id="sideLogoSimple" alt="Mirr Oils" onerror="window.useDefaultLogo&&useDefaultLogo()">
+  </div>
+  <div class="nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i><span class="nav-label">Tableau de bord</span></div>
+    <div class="nav-item" data-page="stats"><i class="ti ti-chart-line"></i><span class="nav-label">Statistiques</span></div>
+    <div class="nav-item" data-page="ventes"><i class="ti ti-shopping-cart"></i><span class="nav-label">Ventes</span></div>
+    <div class="nav-item" data-page="depenses"><i class="ti ti-wallet"></i><span class="nav-label">Dépenses</span></div>
+    <div class="nav-section">Gestion</div>
+    <div class="nav-item" data-page="clients"><i class="ti ti-users"></i><span class="nav-label">Clients</span></div>
+    <div class="nav-item" data-page="produits"><i class="ti ti-droplet"></i><span class="nav-label">Produits</span></div>
+    <div class="nav-item" data-page="tresorerie"><i class="ti ti-cash"></i><span class="nav-label">Trésorerie</span></div>
+    <div class="nav-section">Rapports</div>
+    <div class="nav-item" data-page="rapports"><i class="ti ti-report-analytics"></i><span class="nav-label">Rapports</span></div>
+    <div class="nav-item" data-page="objectifs"><i class="ti ti-target"></i><span class="nav-label">Objectifs</span></div>
+    <div class="nav-section">Config</div>
+    <div class="nav-item" data-page="parametres"><i class="ti ti-settings"></i><span class="nav-label">Parametres</span></div>
+  </div>
+  <div class="logo-cap" style="padding:8px 10px">v1.0.0© Gestion commerciale</div>
+  <div class="sidebar-footer">
+    <div class="theme-row" onclick="toggleTheme()"><i class="ti ti-moon" style="font-size:16px"></i><span class="sf-label" style="flex:1;font-size:12px">Mode sombre</span><div class="sw on" id="themeSwitch"><div class="sw-knob"></div></div></div>
+    <button class="stbtn mt-8" onclick="toggleSidebar()"><i class="ti ti-layout-sidebar-left-collapse" id="sidebarIcon"></i></button>
+  </div>
+</nav>
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">Tableau de bord</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary" onclick="openModal('modalVente')"><i class="ti ti-plus"></i> Nouvelle vente</button>
+      <button class="btn" onclick="openModal('modalDepense')"><i class="ti ti-wallet"></i> Depense</button>
+    </div>
+  </div>
+  <div class="content">
+
+<!-- PAGE: DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="quick-actions">
+    <div class="qa-btn" onclick="openModal('modalVente')"><i class="ti ti-shopping-cart-plus"></i><span class="qa-label">Enregistrer vente</span></div>
+    <div class="qa-btn" onclick="openModal('modalDepense')"><i class="ti ti-receipt-2"></i><span class="qa-label">Ajouter depense</span></div>
+    <div class="qa-btn" onclick="openModal('modalClient')"><i class="ti ti-user-plus"></i><span class="qa-label">Nouveau client</span></div>
+    <div class="qa-btn" onclick="navigate('rapports')"><i class="ti ti-file-analytics"></i><span class="qa-label">Generer rapport</span></div>
+  </div>
+  <!-- Catalogue produits avec sélecteur de type de prix -->
+  <div class="card" style="padding:16px;margin-bottom:16px">
+    <div class="card-header" style="margin-bottom:12px">
+      <div class="card-title"><i class="ti ti-droplet"></i> Catalogue produits</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12px;color:var(--text2)">Afficher prix :</span>
+        <div class="period-pills" style="gap:6px">
+          <div class="period-pill active" id="dpill-client" onclick="setDashPriceType('client',this)">Client</div>
+          <div class="period-pill" id="dpill-mecanicien" onclick="setDashPriceType('mecanicien',this)">Mécanicien</div>
+          <div class="period-pill" id="dpill-grossiste" onclick="setDashPriceType('grossiste',this)">Grossiste</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="navigate('produits')">Gérer <i class="ti ti-arrow-right"></i></button>
+      </div>
+    </div>
+    <div class="product-banner" id="productBanner"></div>
+  </div>
+  <!-- Ventes du jour -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title"><i class="ti ti-calendar-today"></i> Ventes du jour — <span id="d-today-label"></span></div>
+        <div class="card-subtitle" style="margin-top:4px">CA jour : <strong id="d-today-ca" style="color:var(--success)">0 FCFA</strong> &nbsp;|&nbsp; Transactions : <strong id="d-today-txn">0</strong></div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('modalVente')"><i class="ti ti-plus"></i> Nouvelle vente</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Heure</th><th>Produit</th><th>Qté</th><th>Type prix</th><th>Client</th><th class="text-right">Montant (FCFA)</th><th class="text-center">Action</th></tr></thead>
+        <tbody id="todaySalesBody"></tbody>
+      </table>
+    </div>
+    <div id="todaySalesEmpty" style="display:none;text-align:center;padding:28px;color:var(--text3);font-size:13px">
+      <i class="ti ti-shopping-cart-off" style="font-size:32px;display:block;margin-bottom:8px;opacity:.25"></i>
+      Aucune vente enregistrée aujourd'hui
+    </div>
+  </div>
+</div>
+<!-- PAGE: STATISTIQUES -->
+<div class="page" id="page-stats">
+  <div class="stats-filters">
+    <div class="filter-group">
+      <label>Periode predefinie</label>
+      <div class="period-pills">
+        <div class="period-pill active" onclick="setPeriod('week',this)">Cette semaine</div>
+        <div class="period-pill" onclick="setPeriod('month',this)">Ce mois</div>
+        <div class="period-pill" onclick="setPeriod('quarter',this)">Trimestre</div>
+        <div class="period-pill" onclick="setPeriod('year',this)">Annee</div>
+        <div class="period-pill" onclick="setPeriod('custom',this)">Personnalisee</div>
+      </div>
+    </div>
+    <div class="filter-group" id="customRangeFrom" style="display:none"><label>Du</label><input type="date" id="statFrom" style="width:auto" onchange="refreshStats()"></div>
+    <div class="filter-group" id="customRangeTo" style="display:none"><label>Au</label><input type="date" id="statTo" style="width:auto" onchange="refreshStats()"></div>
+    <div class="filter-group"><label>Regrouper par</label><select id="statGroup" style="width:auto" onchange="refreshStats()"><option value="day">Jour</option><option value="week" selected>Semaine</option><option value="month">Mois</option></select></div>
+    <div class="filter-group"><label>Produit</label><select id="statProd" style="width:auto" onchange="refreshStats()"><option value="">Tous</option></select></div>
+    <div class="filter-group"><label>Type client</label><select id="statType" style="width:auto" onchange="refreshStats()"><option value="">Tous</option><option value="client">Client</option><option value="mecanicien">Mecanicien</option><option value="grossiste">Grossiste</option><option value="coursier">Coursier</option></select></div>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-val text-success" id="sk-ca">—</div><div class="kpi-lbl">Chiffre d'affaires</div></div>
+    <div class="kpi"><div class="kpi-val text-danger" id="sk-dep">—</div><div class="kpi-lbl">Depenses</div></div>
+    <div class="kpi"><div class="kpi-val text-info" id="sk-net">—</div><div class="kpi-lbl">Resultat net</div></div>
+    <div class="kpi"><div class="kpi-val text-warning" id="sk-txn">—</div><div class="kpi-lbl">Transactions</div></div>
+    <div class="kpi"><div class="kpi-val text-primary" id="sk-avg">—</div><div class="kpi-lbl">Ticket moyen</div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-chart-line"></i> Evolution CA et Depenses</div></div><div style="position:relative;height:220px"><canvas id="chartEvolution"></canvas></div></div>
+    <div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-chart-donut"></i> CA par type de client</div></div><div style="position:relative;height:220px"><canvas id="chartClientType"></canvas></div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-chart-bar"></i> Top produits (CA)</div></div><div style="position:relative;height:220px"><canvas id="chartTopProd"></canvas></div></div>
+    <div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-chart-pie"></i> Repartition depenses</div></div><div style="position:relative;height:220px"><canvas id="chartDep"></canvas></div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-users"></i> Top clients (CA)</div></div><div style="position:relative;height:220px"><canvas id="chartTopClients"></canvas></div></div>
+    <div class="card"><div class="card-header"><div class="card-title"><i class="ti ti-user-dollar"></i> Ventes par client</div></div><div class="tbl-wrap" style="max-height:240px;overflow:auto"><table><thead><tr><th>Client</th><th class="text-right">CA (XOF)</th><th class="text-center">Ventes</th><th class="text-right">Ticket moyen</th><th>% CA</th></tr></thead><tbody id="clientStatsBody"></tbody></table></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-table"></i> Detail par periode</div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Periode</th><th class="text-right">CA (XOF)</th><th class="text-right">Depenses</th><th class="text-right">Resultat net</th><th>% CA</th><th>Transactions</th><th>Ticket moyen</th></tr></thead><tbody id="statsTableBody"></tbody></table></div>
+  </div>
+</div>
+<!-- PAGE: VENTES -->
+<div class="page" id="page-ventes">
+  <div class="g3">
+    <div class="metric m-green"><div class="metric-icon"><i class="ti ti-trending-up"></i></div><div class="metric-label">CA total</div><div class="metric-value" id="v-ca">0</div><div class="metric-sub">XOF</div></div>
+    <div class="metric m-blue"><div class="metric-icon"><i class="ti ti-list-numbers"></i></div><div class="metric-label">Transactions</div><div class="metric-value" id="v-count">0</div></div>
+    <div class="metric m-orange"><div class="metric-icon"><i class="ti ti-receipt"></i></div><div class="metric-label">Ticket moyen</div><div class="metric-value" id="v-avg">0</div><div class="metric-sub">XOF</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-shopping-cart"></i> Historique des ventes</div><button class="btn btn-primary" onclick="openModal('modalVente')"><i class="ti ti-plus"></i> Nouvelle vente</button></div>
+    <div class="filters-row">
+      <select id="fDate" onchange="renderSales()" style="width:auto"><option value="">Toutes les dates</option></select>
+      <select id="fType" onchange="renderSales()" style="width:auto"><option value="">Tous les types</option><option value="client">Client</option><option value="mecanicien">Mecanicien</option><option value="grossiste">Grossiste</option><option value="coursier">Coursier</option></select>
+      <div class="search-bar"><i class="ti ti-search"></i><input type="search" placeholder="Produit, client..." oninput="renderSales()" id="fSearch"></div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Produit</th><th>Qte</th><th>Type prix</th><th>Remise</th><th>Client</th><th class="text-right">Montant (XOF)</th><th>Statut</th><th class="text-center">Actions</th></tr></thead><tbody id="salesBody"></tbody></table></div>
+    <div id="salesEmpty" class="empty-state" style="display:none"><i class="ti ti-shopping-cart-off"></i><p>Aucune vente trouvee</p></div>
+  </div>
+</div>
+<!-- PAGE: DEPENSES -->
+<div class="page" id="page-depenses">
+  <div class="g3">
+    <div class="metric m-red"><div class="metric-icon"><i class="ti ti-wallet"></i></div><div class="metric-label">Total depenses</div><div class="metric-value" id="dep-total">0</div><div class="metric-sub">XOF</div></div>
+    <div class="metric m-orange"><div class="metric-icon"><i class="ti ti-calendar-month"></i></div><div class="metric-label">Nb depenses</div><div class="metric-value" id="dep-count">0</div></div>
+    <div class="metric m-green"><div class="metric-icon"><i class="ti ti-shield-check"></i></div><div class="metric-label">Budget restant</div><div class="metric-value" id="dep-reste">0</div><div class="metric-sub">sur 250 000 XOF</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-wallet"></i> Depenses enregistrees</div><button class="btn btn-primary" onclick="openModal('modalDepense')"><i class="ti ti-plus"></i> Nouvelle depense</button></div>
+    <div class="filters-row">
+      <select id="fDepDate" onchange="renderDepenses()" style="width:auto"><option value="">Toutes les dates</option></select>
+      <select id="fDepCat" onchange="renderDepenses()" style="width:auto"><option value="">Toutes categories</option></select>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Designation</th><th>Categorie</th><th>Moyen</th><th class="text-right">Montant (XOF)</th><th class="text-center">Actions</th></tr></thead><tbody id="depBody"></tbody></table></div>
+    <div id="depEmpty" class="empty-state" style="display:none"><i class="ti ti-wallet-off"></i><p>Aucune depense</p></div>
+  </div>
+</div>
+<!-- PAGE: CLIENTS -->
+<div class="page" id="page-clients">
+  <div class="tabs-bar" id="clientTabs"></div>
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-users"></i> Repertoire clients</div>
+      <div style="display:flex;gap:8px">
+        <div class="search-bar"><i class="ti ti-search"></i><input type="search" placeholder="Nom, telephone..." oninput="renderClients()" id="fClientSearch"></div>
+        <button class="btn" onclick="openTypesModal()"><i class="ti ti-tags"></i> Gérer les types</button>
+        <button class="btn btn-primary" onclick="openModal('modalClient')"><i class="ti ti-user-plus"></i> Nouveau client</button>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>Nom</th><th>Categorie</th><th>Telephone</th><th>Email</th><th>Adresse</th><th>Prix defaut</th><th class="text-right">Solde du</th><th class="text-center">Actions</th></tr></thead><tbody id="clientBody"></tbody></table></div>
+  </div>
+</div>
+<!-- PAGE: PRODUITS -->
+<div class="page" id="page-produits">
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-droplet"></i> Catalogue produits</div><button class="btn btn-primary" onclick="openModal('modalProduit')"><i class="ti ti-plus"></i> Nouveau produit</button></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Produit</th><th>Conditionnement</th><th class="text-right">Prix client</th><th class="text-right">Prix mecanicien</th><th class="text-right">Prix grossiste</th><th>Stock</th><th class="text-center">Actions</th></tr></thead><tbody id="prodBody"></tbody></table></div>
+  </div>
+</div>
+<!-- PAGE: TRESORERIE -->
+<div class="page" id="page-tresorerie">
+  <div class="g4" style="margin-bottom:16px">
+    <div class="metric m-green"><div class="metric-label">Solde total trésorerie</div><div class="metric-value" id="treso-total">0</div><div class="metric-sub">XOF</div></div>
+    <div class="metric m-blue"><div class="metric-label">Total entrées</div><div class="metric-value" id="treso-in">0</div><div class="metric-sub">XOF</div></div>
+    <div class="metric m-red"><div class="metric-label">Total sorties</div><div class="metric-value" id="treso-out">0</div><div class="metric-sub">XOF</div></div>
+    <div class="metric m-orange"><div class="metric-label">Moyens de trésorerie</div><div class="metric-value" id="treso-count">0</div><div class="metric-sub">comptes</div></div>
+  </div>
+  <div class="card mb-16">
+    <div class="card-header"><div class="card-title"><i class="ti ti-wallet"></i> Moyens de trésorerie</div><button class="btn btn-primary" onclick="openCompte()"><i class="ti ti-plus"></i> Nouveau moyen</button></div>
+    <div class="g4" id="comptesCards"></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="ti ti-arrows-exchange"></i> Mouvements de trésorerie</div><button class="btn btn-primary" onclick="openMouvement()"><i class="ti ti-plus"></i> Nouveau mouvement</button></div>
+    <div class="filters-row" style="align-items:flex-end">
+      <div class="filter-group"><label>Compte</label><select id="fTresoCompte" onchange="renderTresorerie()" style="width:auto"><option value="">Tous les comptes</option></select></div>
+      <div class="filter-group"><label>Type</label><select id="fTresoSens" onchange="renderTresorerie()" style="width:auto"><option value="">Entrées + Sorties</option><option value="entree">Entrées seulement</option><option value="sortie">Sorties seulement</option></select></div>
+      <div class="filter-group"><label>Du</label><input type="date" id="fTresoFrom" onchange="renderTresorerie()" style="width:auto"></div>
+      <div class="filter-group"><label>Au</label><input type="date" id="fTresoTo" onchange="renderTresorerie()" style="width:auto"></div>
+      <button class="btn btn-sm" onclick="resetTresoDates()" title="Effacer les dates"><i class="ti ti-x"></i> Effacer</button>
+    </div>
+    <div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Compte</th><th>Mouvement</th><th>Motif</th><th>Source</th><th class="text-right">Montant (XOF)</th><th class="text-center">Actions</th></tr></thead><tbody id="tresoBody"></tbody></table></div>
+    <div id="tresoEmpty" style="display:none;text-align:center;padding:28px;color:var(--text3);font-size:13px">
+      <i class="ti ti-cash-off" style="font-size:32px;display:block;margin-bottom:8px;opacity:.25"></i>
+      Aucun mouvement de trésorerie
+    </div>
+  </div>
+</div>
+<!-- PAGE: RAPPORTS -->
+<div class="page" id="page-rapports">
+  <div class="tabs-bar">
+    <div class="tab-item active" onclick="switchReport('hebdo',this)">Rapports hebdomadaires</div>
+    <div class="tab-item" onclick="switchReport('mensuel',this)">Rapports mensuels</div>
+  </div>
+  <div id="rep-hebdo">
+    <div class="card mb-16">
+      <div class="card-header"><div class="card-title"><i class="ti ti-calendar-week"></i> Selectionner une semaine</div></div>
+      <div class="filters-row">
+        <select id="repWeekSel" onchange="loadWeekReport()" style="min-width:240px">
+          <!-- Options remplies dynamiquement par populateReportSelectors() -->
+        </select>
+        <button class="btn btn-primary" onclick="generatePDF('hebdo')"><i class="ti ti-file-type-pdf"></i> Generer PDF</button>
+        <button class="btn" onclick="generateExcel('hebdo')"><i class="ti ti-file-type-xls"></i> Generer Excel</button>
+        <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer</button>
+      </div>
+    </div>
+    <div id="weekReportContent"></div>
+  </div>
+  <div id="rep-mensuel" style="display:none">
+    <div class="card mb-16">
+      <div class="card-header"><div class="card-title"><i class="ti ti-calendar-month"></i> Selectionner un mois</div></div>
+      <div class="filters-row">
+        <select id="repMonthSel" onchange="loadMonthReport()" style="min-width:200px">
+          <!-- Options remplies dynamiquement par populateReportSelectors() -->
+        </select>
+        <button class="btn btn-primary" onclick="generatePDF('mensuel')"><i class="ti ti-file-type-pdf"></i> Generer PDF</button>
+        <button class="btn" onclick="generateExcel('mensuel')"><i class="ti ti-file-type-xls"></i> Generer Excel</button>
+        <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer</button>
+      </div>
+    </div>
+    <div id="monthReportContent"></div>
+  </div>
+</div>
+<!-- PAGE: OBJECTIFS -->
+<div class="page" id="page-objectifs">
+  <div class="card mb-16">
+    <div class="card-header"><div class="card-title"><i class="ti ti-target"></i> Objectifs commerciaux</div><button class="btn btn-primary" onclick="openModal('modalObjectif')"><i class="ti ti-edit"></i> Modifier</button></div>
+    <div class="g3" style="margin-bottom:0">
+      <div class="metric m-blue"><div class="metric-label">Obj. CA mensuel</div><div class="metric-value" id="obj-ca-m">—</div><div class="metric-sub">XOF</div></div>
+      <div class="metric m-blue"><div class="metric-label">Obj. CA hebdo</div><div class="metric-value" id="obj-ca-h">—</div><div class="metric-sub">XOF</div></div>
+      <div class="metric m-blue"><div class="metric-label">Budget depenses max</div><div class="metric-value" id="obj-dep">—</div><div class="metric-sub">XOF / mois</div></div>
+    </div>
+  </div>
+  <div class="card mb-16">
+    <div class="card-header"><div class="card-title">Suivi semaine par semaine</div><span class="fs-11 text-muted">Objectif éditable par semaine (vide = objectif global)</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Semaine</th><th class="text-right">Obj. CA</th><th class="text-right">CA realise</th><th class="text-right">Ecart</th><th class="text-right">Taux</th></tr></thead>
+    <tbody id="objSuiviBody"></tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Suivi mois par mois</div><span class="fs-11 text-muted">Objectif éditable par mois (vide = objectif global)</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Mois</th><th class="text-right">Obj. CA</th><th class="text-right">CA realise</th><th class="text-right">Ecart</th><th class="text-right">Taux</th></tr></thead>
+    <tbody id="objMoisBody"></tbody></table></div>
+  </div>
+</div>
+<!-- PAGE: PARAMETRES -->
+<div class="page" id="page-parametres">
+  <div class="tabs-bar">
+    <div class="tab-item active" onclick="switchParam('general',this)">General</div>
+    <div class="tab-item" onclick="switchParam('apparence',this)">Apparence</div>
+    <div class="tab-item" onclick="switchParam('categories',this)">Categories depenses</div>
+  </div>
+  <div id="param-general">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-building-store"></i> Informations societe</div></div>
+      <div class="form-row cols-2"><div class="form-group"><label class="lbl">Nom plateforme</label><input type="text" id="sName"></div><div class="form-group"><label class="lbl">Slogan</label><input type="text" id="sSlogan"></div></div>
+      <div class="form-row cols-2"><div class="form-group"><label class="lbl">Telephone</label><input type="tel" id="sTel"></div><div class="form-group"><label class="lbl">Email</label><input type="email" id="sEmail"></div></div>
+      <div class="form-group"><label class="lbl">Adresse</label><input type="text" id="sAdresse"></div>
+      <div class="form-row cols-2"><div class="form-group"><label class="lbl">NIF</label><input type="text" id="sNif" placeholder="N° d'identification fiscale"></div><div class="form-group"><label class="lbl">RCCM</label><input type="text" id="sRccm" placeholder="Registre du commerce"></div></div>
+      <div class="form-row cols-3"><div class="form-group"><label class="lbl">Obj. CA mensuel (XOF)</label><input type="number" id="sObjCAM"></div><div class="form-group"><label class="lbl">Obj. CA hebdo (XOF)</label><input type="number" id="sObjCAH"></div><div class="form-group"><label class="lbl">Budget depenses max</label><input type="number" id="sObjDep"></div></div>
+      <button class="btn btn-primary" onclick="saveSettings()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
+    </div>
+    <div class="card mt-16">
+      <div class="card-header"><div class="card-title"><i class="ti ti-lock"></i> Mot de passe d'accès</div></div>
+      <div class="form-row cols-3">
+        <div class="form-group"><label class="lbl">Mot de passe actuel</label><input type="password" id="pwdCurrent" placeholder="défaut : 1234"></div>
+        <div class="form-group"><label class="lbl">Nouveau mot de passe</label><input type="password" id="pwdNew" placeholder="min. 4 caractères"></div>
+        <div class="form-group"><label class="lbl">Confirmer</label><input type="password" id="pwdConfirm"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="changePassword()"><i class="ti ti-key"></i> Modifier le mot de passe</button>
+        <button class="btn" onclick="lockNow()"><i class="ti ti-lock"></i> Verrouiller maintenant</button>
+      </div>
+    </div>
+    <div class="card mt-16">
+      <div class="card-header"><div class="card-title"><i class="ti ti-database"></i> Données (sauvegarde)</div></div>
+      <p class="fs-13 text-muted" style="margin-bottom:12px">Exportez toutes les données (data.json) pour les sauvegarder, ou réimportez un fichier exporté.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="exportDataJSON()"><i class="ti ti-file-download"></i> Exporter JSON</button>
+        <button class="btn" onclick="storageImportJSON()"><i class="ti ti-file-upload"></i> Importer JSON</button>
+        <button class="btn btn-danger-outline" onclick="resetData()"><i class="ti ti-trash"></i> Réinitialiser</button>
+      </div>
+    </div>
+  </div>
+  <div id="param-apparence" style="display:none">
+    <div class="card mb-16">
+      <div class="card-header"><div class="card-title"><i class="ti ti-palette"></i> Couleur principale</div></div>
+      <div class="color-grid">
+        <div class="color-swatch selected" style="background:#C0392B" data-c="#C0392B" data-cd="#922B21" onclick="setColor(this)"><i class="ti ti-check check"></i></div>
+        <div class="color-swatch" style="background:#1A5276" data-c="#1A5276" data-cd="#154360" onclick="setColor(this)"><i class="ti ti-check check"></i></div>
+        <div class="color-swatch" style="background:#1E8449" data-c="#1E8449" data-cd="#196F3D" onclick="setColor(this)"><i class="ti ti-check check"></i></div>
+        <div class="color-swatch" style="background:#7D3C98" data-c="#7D3C98" data-cd="#6C3483" onclick="setColor(this)"><i class="ti ti-check check"></i></div>
+        <div class="color-swatch" style="background:#D35400" data-c="#D35400" data-cd="#A04000" onclick="setColor(this)"><i class="ti ti-check check"></i></div>
+        <div class="color-swatch" style="background:#1A7A7A" data-c="#1A7A7A" data-cd="#0E5E5E" onclick="setColor(this)"><i class="ti ti-check check"></i></div>
+      </div>
+      <div class="form-group"><label class="lbl">Couleur personnalisee</label><div class="input-group"><input type="color" value="#C0392B" id="customColor"><input type="text" value="#C0392B" id="customColorHex" style="width:120px"><button class="btn" onclick="applyCustomColor()">Appliquer</button></div></div>
+    </div>
+    <div class="card mb-16">
+      <div class="card-header"><div class="card-title"><i class="ti ti-photo"></i> Logos</div></div>
+      <p class="fs-13 text-muted" style="margin-bottom:14px">Importez votre logo complet (sidebar ouverte) et votre logo simple (sidebar repliée). PNG sur fond transparent recommandé.</p>
+      <div class="g2">
+        <div class="form-group">
+          <label class="lbl">Logo complet</label>
+          <div style="display:flex;align-items:center;gap:12px">
+            <img id="logoFullPreview" src="logo.png" alt="" style="height:48px;max-width:150px;object-fit:contain;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:4px">
+            <input type="file" id="logoFullInput" accept="image/*" style="display:none" onchange="onLogoSelected('logo',event)">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button type="button" class="btn btn-sm" onclick="document.getElementById('logoFullInput').click()"><i class="ti ti-upload"></i> Importer</button>
+              <button type="button" class="btn btn-sm" onclick="resetLogo('logo')"><i class="ti ti-restore"></i> Défaut</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="lbl">Logo simple</label>
+          <div style="display:flex;align-items:center;gap:12px">
+            <img id="logoSimplePreview" src="simple-logo.png" alt="" style="height:48px;width:48px;object-fit:contain;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:4px">
+            <input type="file" id="logoSimpleInput" accept="image/*" style="display:none" onchange="onLogoSelected('logoSimple',event)">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button type="button" class="btn btn-sm" onclick="document.getElementById('logoSimpleInput').click()"><i class="ti ti-upload"></i> Importer</button>
+              <button type="button" class="btn btn-sm" onclick="resetLogo('logoSimple')"><i class="ti ti-restore"></i> Défaut</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-sun-moon"></i> Theme</div></div>
+      <div class="g2" style="margin-bottom:0">
+        <div id="themeCardDark" style="border:2px solid var(--primary);border-radius:var(--radius-lg);padding:18px;cursor:pointer;text-align:center" onclick="setTheme('dark')"><i class="ti ti-moon" style="font-size:28px;color:var(--primary)"></i><div style="font-size:13px;font-weight:600;margin-top:8px">Mode sombre</div></div>
+        <div id="themeCardLight" style="border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;cursor:pointer;text-align:center" onclick="setTheme('light')"><i class="ti ti-sun" style="font-size:28px;color:var(--warning)"></i><div style="font-size:13px;font-weight:600;margin-top:8px">Mode clair</div></div>
+      </div>
+    </div>
+  </div>
+  <div id="param-categories" style="display:none">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="ti ti-category"></i> Categories de depenses</div><button class="btn btn-primary" onclick="addCategoryPrompt()"><i class="ti ti-plus"></i> Ajouter</button></div>
+      <div id="catListParam"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalVente">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-shopping-cart" style="margin-right:8px;color:var(--primary)"></i>Enregistrer une vente</span><button class="modal-close" onclick="closeModal('modalVente')">x</button></div>
+    <div class="modal-body">
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="lbl">Date <span class="req">*</span></label><input type="date" id="vDate"></div>
+        <div class="form-group"><label class="lbl">Type de prix</label><select id="vPriceType" onchange="fillPrice()"><option value="client">Prix client</option><option value="mecanicien">Prix mecanicien</option><option value="grossiste">Prix grossiste</option></select></div>
+      </div>
+      <div class="form-group"><label class="lbl">Produit <span class="req">*</span></label><select id="vProd" onchange="fillPrice()"><option value="">-- Selectionner --</option></select></div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label class="lbl">Quantite <span class="req">*</span></label>
+          <input type="number" id="vQty" min="0" step="0.5" placeholder="0" oninput="calcSaleTotal()">
+          <div class="hint" id="vUnitHint"></div>
+        </div>
+        <div class="form-group">
+          <label class="lbl">Prix unitaire (XOF)</label>
+          <input type="number" id="vUnitPrice" placeholder="0" oninput="calcSaleTotal()">
+          <div class="hint" id="vPriceHint"></div>
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label class="lbl">Remise (XOF)</label>
+          <input type="number" id="vRemise" min="0" value="0" placeholder="0" oninput="calcSaleTotal()">
+          <div class="hint" id="vRemiseHint"></div>
+        </div>
+        <div class="form-group">
+          <label class="lbl">Montant total (XOF) <span class="req">*</span></label>
+          <input type="number" id="vAmount" placeholder="0" style="font-weight:700;font-size:15px">
+          <div class="hint hint-success" id="vTotalHint"></div>
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="lbl">Client (repertoire)</label><select id="vClient"><option value="">-- Aucun --</option></select></div>
+        <div class="form-group"><label class="lbl">Ou saisir nom libre</label><input type="text" id="vClientName" placeholder="Nom libre"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="lbl">Moyen de paiement <span class="req">*</span></label><select id="vCompte"></select></div>
+        <div class="form-group"><label class="lbl">Statut facture</label><select id="vStatut"><option value="paye">Payée</option><option value="impaye">Non payée (crédit)</option></select></div>
+      </div>
+      <div class="form-group"><label class="lbl">Note</label><textarea id="vNote" placeholder="Remarque optionnelle..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalVente')">Annuler</button>
+      <button class="btn" onclick="saveAndReceipt()"><i class="ti ti-receipt"></i> + Recu</button>
+      <button class="btn btn-primary" onclick="saveSale()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalRecu">
+  <div class="modal modal-sm">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-receipt" style="margin-right:8px;color:var(--primary)"></i>Recu de vente</span><button class="modal-close" onclick="closeModal('modalRecu')">x</button></div>
+    <div class="modal-body">
+      <div class="receipt-paper" id="receiptContent">
+        <div style="text-align:center;margin-bottom:14px">
+          <div class="receipt-mark">M</div>
+          <div class="receipt-company" id="rCompany">MIRR OILS</div>
+          <div style="font-size:10px;color:#888" id="rSlogan">Distribution Huiles Moteur &amp; Lubrifiants</div>
+          <div style="font-size:10px;color:#888" id="rAddr">Lome, Togo</div>
+          <div style="font-size:10px;color:#888" id="rTel">--</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#999;margin:8px 0 12px">
+          <span>N° <strong id="rNum">MO-2026-0001</strong></span><span>Date: <strong id="rDate">--</strong></span>
+        </div>
+        <hr class="receipt-divider">
+        <div class="receipt-line"><span class="rl-label">Produit</span><span style="text-align:right;max-width:160px;font-weight:500" id="rProd">--</span></div>
+        <div class="receipt-line"><span class="rl-label">Quantite</span><span id="rQty">--</span></div>
+        <div class="receipt-line"><span class="rl-label">Prix unitaire</span><span id="rUnit">--</span></div>
+        <div class="receipt-line"><span class="rl-label">Type de prix</span><span id="rType">Client</span></div>
+        <div class="receipt-line"><span class="rl-label">Client</span><span id="rClient">--</span></div>
+        <div class="receipt-line" id="rClientPhoneLine" style="display:none"><span class="rl-label">Tel. client</span><span id="rClientPhone">--</span></div>
+        <div class="receipt-line"><span class="rl-label">Moyen de paiement</span><span id="rMoyen">--</span></div>
+        <hr class="receipt-divider">
+        <div class="receipt-line" id="rSubtotalLine" style="display:none"><span class="rl-label" style="font-weight:600">Sous-total</span><span style="font-weight:600" id="rSubtotal">--</span></div>
+        <div class="receipt-line" id="rRemiseLine" style="display:none"><span class="rl-label" style="color:#c00">Remise accordee</span><span style="color:#c00;font-weight:600" id="rRemise">--</span></div>
+        <div class="receipt-total-line"><span>NET A PAYER</span><span id="rTotal">0 XOF</span></div>
+        <div class="receipt-line" id="rStatutLine" style="margin-top:8px"><span class="rl-label">Statut</span><span id="rStatut" style="font-weight:600">--</span></div>
+        <div class="receipt-line" id="rResteLine" style="display:none"><span class="rl-label" style="color:#c00">Reste a payer</span><span id="rReste" style="color:#c00;font-weight:600">--</span></div>
+        <div style="text-align:center;font-size:10px;color:#aaa;margin-top:12px;border-top:1px dashed #ddd;padding-top:8px" id="rFooter">Merci pour votre confiance !<br>Mirr Oils</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalRecu')">Fermer</button>
+      <button class="btn" onclick="window.print()"><i class="ti ti-printer"></i> Imprimer</button>
+      <button class="btn btn-primary" onclick="generateReceiptPDF()"><i class="ti ti-download"></i> PDF</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalDepense">
+  <div class="modal modal-sm">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-wallet" style="margin-right:8px;color:var(--primary)"></i>Enregistrer une depense</span><button class="modal-close" onclick="closeModal('modalDepense')">x</button></div>
+    <div class="modal-body">
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="lbl">Date <span class="req">*</span></label><input type="date" id="dDate"></div>
+        <div class="form-group"><label class="lbl">Categorie <span class="req">*</span></label><select id="dCat" onchange="autoFillDesig()"><option value="">-- Selectionner --</option></select></div>
+      </div>
+      <div class="form-group"><label class="lbl">Designation <span class="req">*</span></label><input type="text" id="dDesig" placeholder="Description de la depense"></div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="lbl">Montant (XOF) <span class="req">*</span></label><input type="number" id="dAmount" placeholder="0"></div>
+        <div class="form-group"><label class="lbl">Payé depuis <span class="req">*</span></label><select id="dCompte"></select></div>
+      </div>
+      <div class="form-group"><label class="lbl">Note</label><textarea id="dNote" placeholder="N° facture, note..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalDepense')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveDepense()"><i class="ti ti-device-floppy"></i> Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalClient">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-user-plus" style="margin-right:8px;color:var(--primary)"></i>Nouveau client</span><button class="modal-close" onclick="closeModal('modalClient')">x</button></div>
+    <div class="modal-body">
+      <div class="form-row cols-2"><div class="form-group"><label class="lbl">Nom <span class="req">*</span></label><input type="text" id="cName" placeholder="Nom complet ou societe"></div><div class="form-group"><label class="lbl">Categorie <span class="req">*</span></label><select id="cCat"><option value="client">Client</option><option value="mecanicien">Mecanicien</option><option value="grossiste">Grossiste</option><option value="coursier">Coursier</option></select></div></div>
+      <div class="form-row cols-2"><div class="form-group"><label class="lbl">Telephone</label><input type="tel" id="cPhone" placeholder="+228 ..."></div><div class="form-group"><label class="lbl">Email</label><input type="email" id="cEmail" placeholder="email@..."></div></div>
+      <div class="form-group"><label class="lbl">Adresse</label><input type="text" id="cAddr" placeholder="Quartier, Ville"></div>
+      <div class="form-row cols-2"><div class="form-group"><label class="lbl">Type de prix defaut</label><select id="cPriceType"><option value="client">Prix client</option><option value="mecanicien">Prix mecanicien</option><option value="grossiste">Prix grossiste</option></select></div><div class="form-group"><label class="lbl">Solde initial du (XOF)</label><input type="number" id="cSolde" value="0"></div></div>
+      <div class="form-group"><label class="lbl">Note</label><textarea id="cNote"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalClient')">Annuler</button><button class="btn btn-primary" onclick="saveClient()"><i class="ti ti-device-floppy"></i> Enregistrer</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalProduit">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-droplet" style="margin-right:8px;color:var(--primary)"></i><span id="prodModalTitle">Nouveau produit</span></span><button class="modal-close" onclick="closeModal('modalProduit')">x</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="lbl">Image du produit</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <img id="pPhotoPreview" src="" alt="" style="width:56px;height:56px;border-radius:10px;object-fit:cover;border:1px solid var(--border);display:none">
+          <div id="pPhotoPlaceholder" style="width:56px;height:56px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3)"><i class="ti ti-droplet" style="font-size:24px"></i></div>
+          <input type="file" id="pPhotoInput" accept="image/*" style="display:none" onchange="onProductPhotoSelected(event)">
+          <button type="button" class="btn btn-sm" onclick="document.getElementById('pPhotoInput').click()"><i class="ti ti-upload"></i> Choisir une image</button>
+          <button type="button" class="btn btn-sm" id="pPhotoRemove" onclick="clearProductPhoto()" style="display:none"><i class="ti ti-x"></i> Retirer</button>
+        </div>
+      </div>
+      <div class="form-row cols-2"><div class="form-group"><label class="lbl">Nom <span class="req">*</span></label><input type="text" id="pName" placeholder="ex: XDEO SAE 50"></div><div class="form-group"><label class="lbl">Conditionnement</label><input type="text" id="pCond" placeholder="ex: Fut 200L"></div></div>
+      <div class="form-row cols-3"><div class="form-group"><label class="lbl">Prix client (XOF) <span class="req">*</span></label><input type="number" id="pPC" placeholder="0"></div><div class="form-group"><label class="lbl">Prix mecanicien (XOF)</label><input type="number" id="pPM" placeholder="0"></div><div class="form-group"><label class="lbl">Prix grossiste (XOF)</label><input type="number" id="pPG" placeholder="0"></div></div>
+      <div class="form-row cols-2"><div class="form-group"><label class="lbl">Unite de vente</label><input type="text" id="pUnit" placeholder="bouteille, carton, litre..."></div><div class="form-group"><label class="lbl">Stock initial</label><input type="number" id="pStock" value="0"></div></div>
+      <div class="form-group"><label class="lbl">Seuil alerte stock</label><input type="number" id="pAlerte" placeholder="ex: 5"></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalProduit')">Annuler</button><button class="btn btn-primary" onclick="saveProduit()"><i class="ti ti-device-floppy"></i> Enregistrer</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalObjectif">
+  <div class="modal modal-sm">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-target" style="margin-right:8px;color:var(--primary)"></i>Modifier les objectifs</span><button class="modal-close" onclick="closeModal('modalObjectif')">x</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="lbl">Obj. CA mensuel (XOF)</label><input type="number" id="oCAM"></div>
+      <div class="form-group"><label class="lbl">Obj. CA hebdomadaire (XOF)</label><input type="number" id="oCAH"></div>
+      <div class="form-group"><label class="lbl">Budget depenses max/mois (XOF)</label><input type="number" id="oDep"></div>
+      <div class="form-group"><label class="lbl">Obj. CA annuel (XOF)</label><input type="number" value="144000000"></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalObjectif')">Annuler</button><button class="btn btn-primary" onclick="saveObjectifs()"><i class="ti ti-device-floppy"></i> Sauvegarder</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalReassort">
+  <div class="modal modal-sm">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-package" style="margin-right:8px;color:var(--primary)"></i>Mouvement de stock</span><button class="modal-close" onclick="closeModal('modalReassort')">x</button></div>
+    <div class="modal-body">
+      <p class="fs-13" style="margin-bottom:12px">Produit : <strong id="reassortProdName">--</strong> — stock actuel : <strong id="reassortCurrent">0</strong></p>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="lbl">Type</label><select id="reassortType"><option value="reassort">Réapprovisionnement (+)</option><option value="perte">Perte / casse (−)</option></select></div>
+        <div class="form-group"><label class="lbl">Quantité <span class="req">*</span></label><input type="number" id="reassortQty" min="1" placeholder="0"></div>
+      </div>
+      <div class="form-group"><label class="lbl">Date <span class="req">*</span></label><input type="date" id="reassortDate"></div>
+      <div class="form-group"><label class="lbl">Note</label><input type="text" id="reassortNote" placeholder="ex: livraison fournisseur"></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalReassort')">Annuler</button><button class="btn btn-primary" onclick="saveReassort()"><i class="ti ti-device-floppy"></i> Enregistrer</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalStock">
+  <div class="modal modal-xl">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-chart-line" style="margin-right:8px;color:var(--primary)"></i><span id="stockModalTitle">Evolution du stock</span></span><button class="modal-close" onclick="closeModal('modalStock')">x</button></div>
+    <div class="modal-body">
+      <div class="g4" style="margin-bottom:16px">
+        <div class="metric m-green"><div class="metric-label">Stock actuel</div><div class="metric-value" id="stkCurrent">0</div></div>
+        <div class="metric m-blue"><div class="metric-label">Stock initial</div><div class="metric-value" id="stkInitial">0</div></div>
+        <div class="metric m-red"><div class="metric-label">Total vendu</div><div class="metric-value" id="stkSold">0</div></div>
+        <div class="metric m-orange"><div class="metric-label">Seuil alerte</div><div class="metric-value" id="stkAlerte">0</div></div>
+      </div>
+      <div style="position:relative;height:280px"><canvas id="chartStock"></canvas></div>
+      <div class="card-title" style="margin:16px 0 8px"><i class="ti ti-list-details"></i> Mouvements de stock</div>
+      <div class="tbl-wrap" style="max-height:200px;overflow:auto"><table><thead><tr><th>Date</th><th>Mouvement</th><th class="text-right">Qté</th><th class="text-right">Stock après</th><th>Note</th></tr></thead><tbody id="stockMovesBody"></tbody></table></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modalStock');openReassort(window._stockModalProdId)"><i class="ti ti-package"></i> Réapprovisionner</button><button class="btn" onclick="closeModal('modalStock')">Fermer</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalCompte">
+  <div class="modal modal-sm">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-wallet" style="margin-right:8px;color:var(--primary)"></i><span id="compteModalTitle">Nouveau moyen de trésorerie</span></span><button class="modal-close" onclick="closeModal('modalCompte')">x</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="lbl">Nom <span class="req">*</span></label><input type="text" id="coName" placeholder="ex: Caisse, Banque BOA, Tmoney..."></div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="lbl">Type</label><select id="coType"><option value="caisse">Caisse (espèces)</option><option value="tmoney">Tmoney</option><option value="flooz">Flooz</option><option value="banque">Banque</option><option value="autre">Autre</option></select></div>
+        <div class="form-group"><label class="lbl">Solde initial (XOF)</label><input type="number" id="coSolde" value="0"></div>
+      </div>
+      <div class="form-group"><label class="lbl">Note</label><input type="text" id="coNote" placeholder="optionnel"></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalCompte')">Annuler</button><button class="btn btn-primary" onclick="saveCompte()"><i class="ti ti-device-floppy"></i> Enregistrer</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalMouvement">
+  <div class="modal modal-sm">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-arrows-exchange" style="margin-right:8px;color:var(--primary)"></i><span id="mvModalTitle">Nouveau mouvement</span></span><button class="modal-close" onclick="closeModal('modalMouvement')">x</button></div>
+    <div class="modal-body">
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="lbl">Type</label><select id="mvSens" onchange="onMvSensChange()"><option value="entree">Entrée (+)</option><option value="sortie">Sortie (−)</option><option value="transfert">Transfert entre comptes</option></select></div>
+        <div class="form-group"><label class="lbl">Date <span class="req">*</span></label><input type="date" id="mvDate"></div>
+      </div>
+      <div class="form-group"><label class="lbl" id="mvCompteLbl">Compte <span class="req">*</span></label><select id="mvCompte"></select></div>
+      <div class="form-group" id="mvToWrap" style="display:none"><label class="lbl">Compte destination <span class="req">*</span></label><select id="mvTo"></select></div>
+      <div class="form-group"><label class="lbl">Montant (XOF) <span class="req">*</span></label><input type="number" id="mvAmount" placeholder="0"></div>
+      <div class="form-group"><label class="lbl">Motif</label><input type="text" id="mvMotif" placeholder="ex: Dépôt en banque, retrait espèces..."></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalMouvement')">Annuler</button><button class="btn btn-primary" onclick="saveMouvement()"><i class="ti ti-device-floppy"></i> Enregistrer</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalTypes">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-tags" style="margin-right:8px;color:var(--primary)"></i>Gérer les types</span><button class="modal-close" onclick="closeModal('modalTypes')">x</button></div>
+    <div class="modal-body">
+      <div class="card-title" style="margin-bottom:8px"><i class="ti ti-users"></i> Types de client</div>
+      <div id="clientTypesList"></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0 18px">
+        <input type="text" id="newClientType" placeholder="Nouveau type de client" style="flex:1;min-width:140px">
+        <label class="fs-11 text-muted">Fond <input type="color" id="newClientTypeBg" value="#e8f0fe"></label>
+        <label class="fs-11 text-muted">Bordure <input type="color" id="newClientTypeBorder" value="#4285f4"></label>
+        <label class="fs-11 text-muted">Texte <input type="color" id="newClientTypeColor" value="#1a56db"></label>
+        <button class="btn btn-primary btn-sm" onclick="addClientType()"><i class="ti ti-plus"></i> Ajouter</button>
+      </div>
+      <hr class="receipt-divider">
+      <div class="card-title" style="margin:14px 0 8px"><i class="ti ti-coin"></i> Types de prix</div>
+      <div id="priceTypesList"></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px">
+        <input type="text" id="newPriceType" placeholder="Nouveau type de prix" style="flex:1;min-width:140px">
+        <label class="fs-11 text-muted">Fond <input type="color" id="newPriceTypeBg" value="#e6f4ea"></label>
+        <label class="fs-11 text-muted">Bordure <input type="color" id="newPriceTypeBorder" value="#34a853"></label>
+        <label class="fs-11 text-muted">Texte <input type="color" id="newPriceTypeColor" value="#137333"></label>
+        <button class="btn btn-primary btn-sm" onclick="addPriceType()"><i class="ti ti-plus"></i> Ajouter</button>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalTypes')">Fermer</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalAuth">
+  <div class="modal modal-sm">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-shield-lock" style="margin-right:8px;color:var(--primary)"></i>Confirmation requise</span><button class="modal-close" onclick="closeModal('modalAuth')">x</button></div>
+    <div class="modal-body">
+      <p class="fs-13" style="margin-bottom:12px">Entrez le mot de passe pour modifier ou supprimer.</p>
+      <input type="password" id="authPwd" placeholder="Mot de passe" autocomplete="off" onkeydown="if(event.key==='Enter')submitAuth()">
+      <div id="authError" style="color:#e74c3c;font-size:12px;height:16px;margin-top:6px;display:none">Mot de passe incorrect</div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalAuth')">Annuler</button><button class="btn btn-primary" onclick="submitAuth()"><i class="ti ti-check"></i> Confirmer</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalImport">
+  <div class="modal modal-sm">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-file-search" style="margin-right:8px;color:var(--primary)"></i>Analyse du fichier</span><button class="modal-close" onclick="closeModal('modalImport')">x</button></div>
+    <div class="modal-body">
+      <div id="impStatus" style="font-size:13px;font-weight:500;margin-bottom:10px"><i class="ti ti-loader"></i> Analyse du fichier en cours…</div>
+      <div class="progress-bar" style="height:10px;border-radius:5px"><div class="progress-fill" id="impBar" style="width:0%;transition:width .12s linear"></div></div>
+      <div style="text-align:right;font-size:12px;color:var(--text3);margin-top:4px"><span id="impPct">0</span>%</div>
+      <div id="impResult" style="margin-top:14px;display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modalImport')">Annuler</button>
+      <button class="btn btn-primary" id="impConfirmBtn" style="display:none" onclick="confirmImport()"><i class="ti ti-check"></i> Confirmer l'import</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+</div></div></div>
+  <script src="storage.js"></script>
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+
+</body>
+</html>

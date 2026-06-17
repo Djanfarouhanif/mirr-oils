@@ -1,0 +1,39 @@
+============================================================
+   MIRR OILS - Application de gestion de boutique
+   Mode d'emploi (aucune installation necessaire)
+============================================================
+
+POUR DEMARRER L'APPLICATION
+---------------------------
+1. Ouvrez le dossier "MirrOils-Portable".
+2. Double-cliquez sur le fichier  ->  Lancer.bat
+3. Une fenetre noire s'ouvre : c'est normal, NE LA FERMEZ PAS.
+4. Votre navigateur (Chrome, Edge...) s'ouvre tout seul sur
+   l'application. Vous pouvez commencer a travailler.
+
+POUR ARRETER
+------------
+- Le soir, fermez simplement la fenetre noire (ou appuyez sur
+  une touche dedans). Vos donnees sont deja enregistrees.
+
+OU SONT MES DONNEES ?
+---------------------
+- Tout est enregistre automatiquement dans le fichier "data.json"
+  a l'interieur du dossier, a chaque modification.
+- Pour faire une SAUVEGARDE : copiez le fichier "data.json"
+  sur une cle USB de temps en temps. C'est tout votre travail.
+
+QUESTIONS FREQUENTES
+--------------------
+- "Le navigateur ne s'ouvre pas ?"
+  Ouvrez-le vous-meme et tapez l'adresse :  http://localhost:3000
+
+- "Windows affiche un avertissement de securite au 1er lancement ?"
+  Cliquez sur "Informations complementaires" puis "Executer
+  quand meme". C'est sans danger (c'est votre propre application).
+
+- "Je veux deplacer l'application ?"
+  Copiez TOUT le dossier "MirrOils-Portable" (cle USB, autre PC...).
+  Rien a installer sur le nouveau PC.
+
+============================================================
