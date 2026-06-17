@@ -186,8 +186,56 @@ function storageExportJSON(data) {
 }
 
 /**
+ * VALIDATEUR : analyse un objet importé et vérifie qu'il correspond à un
+ * fichier de données valide pour l'application.
+ * @param {*} data objet parsé depuis le fichier
+ * @returns {{ok:boolean, errors:string[], warnings:string[]}}
+ */
+function validateDataFile(data) {
+  const errors = [], warnings = [];
+  if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    return { ok: false, errors: ['Le fichier ne contient pas un objet JSON de données.'], warnings: [] };
+  }
+  // Collections obligatoires (doivent exister et être des tableaux)
+  ['sales', 'depenses', 'clients', 'produits'].forEach(k => {
+    if (!(k in data)) errors.push(`Collection requise manquante : « ${k} ».`);
+    else if (!Array.isArray(data[k])) errors.push(`« ${k} » doit être un tableau.`);
+  });
+  // Collections optionnelles (créées vides si absentes, mais doivent être des tableaux si présentes)
+  ['mouvements', 'comptes', 'tresorerie', 'clientTypes', 'priceTypes'].forEach(k => {
+    if (k in data) { if (!Array.isArray(data[k])) errors.push(`« ${k} » doit être un tableau.`); }
+    else warnings.push(`Collection optionnelle absente : « ${k} » (sera créée vide).`);
+  });
+  // Objets attendus
+  ['objectifs', 'entreprise', 'objWeek', 'objMonth', 'meta'].forEach(k => {
+    if (k in data && (typeof data[k] !== 'object' || data[k] === null || Array.isArray(data[k])))
+      errors.push(`« ${k} » doit être un objet.`);
+  });
+  // nextId
+  if ('nextId' in data) { if (typeof data.nextId !== 'number') errors.push('« nextId » doit être un nombre.'); }
+  else warnings.push('« nextId » absent (sera initialisé).');
+  if (!('password' in data)) warnings.push('Aucun mot de passe dans le fichier (le mot de passe par défaut sera utilisé).');
+
+  // Validation légère du contenu des enregistrements (échantillon : 500 premiers)
+  const checkRecords = (key, reqFields, label) => {
+    if (!Array.isArray(data[key])) return;
+    let bad = 0;
+    data[key].slice(0, 500).forEach((r, i) => {
+      if (r === null || typeof r !== 'object') { if (bad++ < 3) errors.push(`${label} #${i + 1} n'est pas un objet.`); return; }
+      reqFields.forEach(f => { if (!(f in r) && bad++ < 6) errors.push(`${label} #${i + 1} : champ « ${f} » manquant.`); });
+    });
+  };
+  checkRecords('sales',    ['id', 'date', 'amount'], 'Vente');
+  checkRecords('depenses', ['id', 'date', 'amount'], 'Dépense');
+  checkRecords('clients',  ['id', 'name'],           'Client');
+  checkRecords('produits', ['id', 'name'],           'Produit');
+
+  return { ok: errors.length === 0, errors, warnings };
+}
+
+/**
  * IMPORT : charge un data.json depuis un fichier sélectionné par l'utilisateur.
- * Remplace les données dans localStorage et recharge l'app.
+ * Le fichier est validé avant tout remplacement des données.
  */
 function storageImportJSON() {
   const input = document.createElement('input');
@@ -196,13 +244,30 @@ function storageImportJSON() {
   input.onchange = async e => {
     const file = e.target.files[0];
     if (!file) return;
+    let parsed;
     try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-      // Validation minimale
-      if (!parsed.sales || !parsed.depenses || !parsed.produits) {
-        throw new Error('Fichier JSON invalide : collections manquantes');
-      }
+      parsed = JSON.parse(await file.text());
+    } catch (err) {
+      console.error('[Storage] JSON illisible :', err);
+      alert('Fichier illisible : ce n\'est pas du JSON valide.\n\n' + err.message);
+      if (typeof toast === 'function') toast('Import refusé : JSON invalide', 'error');
+      return;
+    }
+
+    // Validation de la structure de données
+    const v = validateDataFile(parsed);
+    if (!v.ok) {
+      const shown = v.errors.slice(0, 12);
+      const extra = v.errors.length > 12 ? `\n… (+${v.errors.length - 12} autre(s) erreur(s))` : '';
+      alert('Fichier de données INVALIDE — import annulé :\n\n• ' + shown.join('\n• ') + extra);
+      if (typeof toast === 'function') toast('Import refusé : fichier invalide', 'error');
+      return;
+    }
+
+    const warn = v.warnings.length ? '\n\nAvertissements :\n• ' + v.warnings.join('\n• ') : '';
+    if (!confirm('Fichier valide ✓\n\nImporter ces données ? Cela REMPLACERA toutes les données actuelles.' + warn)) return;
+
+    try {
       parsed.meta = parsed.meta || {};
       parsed.meta.lastSaved = new Date().toISOString();
       _cacheLocal(parsed);
@@ -211,7 +276,7 @@ function storageImportJSON() {
       setTimeout(() => location.reload(), 1200);
     } catch (err) {
       console.error('[Storage] Import échoué :', err);
-      if (typeof toast === 'function') toast('Fichier JSON invalide', 'error');
+      if (typeof toast === 'function') toast('Échec de l\'enregistrement après import', 'error');
     }
   };
   input.click();
