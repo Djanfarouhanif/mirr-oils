@@ -645,6 +645,18 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modalAuth">
+  <div class="modal modal-sm">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-shield-lock" style="margin-right:8px;color:var(--primary)"></i>Confirmation requise</span><button class="modal-close" onclick="closeModal('modalAuth')">x</button></div>
+    <div class="modal-body">
+      <p class="fs-13" style="margin-bottom:12px">Entrez le mot de passe pour modifier ou supprimer.</p>
+      <input type="password" id="authPwd" placeholder="Mot de passe" autocomplete="off" onkeydown="if(event.key==='Enter')submitAuth()">
+      <div id="authError" style="color:#e74c3c;font-size:12px;height:16px;margin-top:6px;display:none">Mot de passe incorrect</div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalAuth')">Annuler</button><button class="btn btn-primary" onclick="submitAuth()"><i class="ti ti-check"></i> Confirmer</button></div>
+  </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 </div></div></div>
   <script src="storage.js"></script>

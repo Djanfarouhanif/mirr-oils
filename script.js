@@ -546,6 +546,7 @@ function showReceipt(s) {
 }
 
 function editSale(id) {
+  if(requireAuth(()=>editSale(id))) return;
   const s=window.DB.sales.find(x=>x.id===id); if(!s)return;
   editingSaleId=id; openModal('modalVente');
   setTimeout(()=>{
@@ -566,6 +567,7 @@ function editSale(id) {
 
 /** Marque une vente (facture) comme payée et met à jour la trésorerie. */
 function markSalePaid(id) {
+  if(requireAuth(()=>markSalePaid(id))) return;
   const s=window.DB.sales.find(x=>x.id===id); if(!s)return;
   s.statut='paye';
   _syncAndSave();
@@ -574,6 +576,7 @@ function markSalePaid(id) {
 
 /** DELETE VENTE + persistance JSON */
 function deleteSale(id) {
+  if(requireAuth(()=>deleteSale(id))) return;
   if(!confirm('Supprimer cette vente ?'))return;
   const s=window.DB.sales.find(x=>x.id===id);
   if(s) adjustStock(s.prod, s.qty);   // la vente est annulée → on restitue le stock
@@ -657,6 +660,7 @@ function saveDepense() {
 }
 
 function editDepense(id) {
+  if(requireAuth(()=>editDepense(id))) return;
   const d=window.DB.depenses.find(x=>x.id===id); if(!d)return;
   editingDepId=id; openModal('modalDepense');
   setTimeout(()=>{
@@ -671,6 +675,7 @@ function editDepense(id) {
 
 /** DELETE DEPENSE + persistance JSON */
 function deleteDepense(id) {
+  if(requireAuth(()=>deleteDepense(id))) return;
   if(!confirm('Supprimer ?'))return;
   window.DB.depenses=window.DB.depenses.filter(d=>d.id!==id);
   _syncAndSave();
@@ -717,6 +722,7 @@ function saveClient() {
 
 /** DELETE CLIENT + persistance JSON */
 function deleteClient(id) {
+  if(requireAuth(()=>deleteClient(id))) return;
   if(!confirm('Supprimer ?'))return;
   window.DB.clients=window.DB.clients.filter(c=>c.id!==id);
   _syncAndSave();
@@ -823,6 +829,7 @@ function renameType(kind,key){
   toast('Type renommé !','success');
 }
 function deleteType(kind,key){
+  if(requireAuth(()=>deleteType(kind,key))) return;
   const list=_typeList(kind);
   const used = kind==='client'
     ? window.DB.clients.some(c=>c.cat===key)
@@ -928,6 +935,7 @@ function saveProduit() {
 
 /** Ouvre le formulaire produit pré-rempli pour modification. */
 function editProduit(id) {
+  if(requireAuth(()=>editProduit(id))) return;
   const p=window.DB.produits.find(x=>x.id===id);
   if(!p){toast('Produit introuvable','error');return;}
   editingProdId=id;
@@ -947,6 +955,7 @@ function editProduit(id) {
 
 /** DELETE PRODUIT + persistance JSON */
 function deleteProduit(id) {
+  if(requireAuth(()=>deleteProduit(id))) return;
   if(!confirm('Supprimer ?'))return;
   window.DB.produits=window.DB.produits.filter(p=>p.id!==id);
   _syncAndSave();
@@ -1053,6 +1062,7 @@ function showStockChart(id) {
 let reassortProdId=null;
 /** Ouvre le formulaire de mouvement de stock (réassort / perte) pour un produit. */
 function openReassort(id) {
+  if(requireAuth(()=>openReassort(id))) return;
   const p=window.DB.produits.find(x=>x.id===id);
   if(!p){toast('Produit introuvable','error');return;}
   reassortProdId=id;
@@ -1629,6 +1639,7 @@ function openCompte(){
   openModal('modalCompte');
 }
 function editCompte(id){
+  if(requireAuth(()=>editCompte(id))) return;
   const c=window.DB.comptes.find(x=>x.id===id); if(!c){toast('Compte introuvable','error');return;}
   editingCompteId=id;
   document.getElementById('compteModalTitle').textContent='Modifier le moyen';
@@ -1653,6 +1664,7 @@ function saveCompte(){
   closeModal('modalCompte'); fillCompteSelectors(); renderTresorerie();
 }
 function deleteCompte(id){
+  if(requireAuth(()=>deleteCompte(id))) return;
   const def=defaultCompteId();
   const used=window.DB.sales.some(v=>(v.compteId||def)===id)||window.DB.depenses.some(d=>(d.compteId||def)===id)||(window.DB.tresorerie||[]).some(m=>m.compteId===id||m.toCompteId===id);
   if(used){toast('Impossible : ce moyen est utilisé par des ventes / dépenses / mouvements','error');return;}
@@ -1686,6 +1698,7 @@ function openMouvement(){
 }
 /** Ouvre le formulaire pré-rempli pour modifier un mouvement MANUEL existant. */
 function editMouvement(id){
+  if(requireAuth(()=>editMouvement(id))) return;
   const m=(window.DB.tresorerie||[]).find(x=>x.id===id);
   if(!m){toast('Mouvement introuvable','error');return;}
   editingMouvementId=id;
@@ -1725,6 +1738,7 @@ function saveMouvement(){
   _syncAndSave(); closeModal('modalMouvement'); renderTresorerie();
 }
 function deleteMouvement(id){
+  if(requireAuth(()=>deleteMouvement(id))) return;
   if(!confirm('Supprimer ce mouvement ?'))return;
   window.DB.tresorerie=window.DB.tresorerie.filter(m=>m.id!==id);
   _syncAndSave(); renderTresorerie(); toast('Mouvement supprimé','success');
@@ -1842,6 +1856,7 @@ function addCategoryPrompt() {
   }
 }
 function removeCategory(name) {
+  if(requireAuth(()=>removeCategory(name))) return;
   const idx=CATEGORIES.indexOf(name);
   if(idx>=0){
     CATEGORIES.splice(idx,1);
@@ -1976,3 +1991,30 @@ function changePassword(){
     const i=document.getElementById('lockPwd'); if(i) i.focus();
   }
 })();
+
+// ============================================================
+// CONFIRMATION PAR MOT DE PASSE avant chaque modification / suppression
+// Jeton à usage unique : le mot de passe est redemandé à chaque action.
+// Usage en tête d'une fonction sensible :  if(requireAuth(()=>maFonction(args))) return;
+// ============================================================
+let _pendingAuthAction=null, _authToken=false;
+function requireAuth(fn){
+  if(_authToken){ _authToken=false; return false; }   // jeton consommé → on procède
+  _pendingAuthAction=()=>{ _authToken=true; fn(); };   // après validation : pose le jeton et rejoue l'action
+  const e=document.getElementById('authPwd'); if(e) e.value='';
+  const err=document.getElementById('authError'); if(err) err.style.display='none';
+  openModal('modalAuth');
+  setTimeout(()=>{ const i=document.getElementById('authPwd'); if(i) i.focus(); },60);
+  return true;   // auth requise → on interrompt l'appel courant
+}
+function submitAuth(){
+  const pwd=document.getElementById('authPwd').value;
+  if(pwd===getStoredPwd()){
+    closeModal('modalAuth');
+    const a=_pendingAuthAction; _pendingAuthAction=null;
+    if(a) a();
+  } else {
+    const err=document.getElementById('authError'); if(err) err.style.display='block';
+    const i=document.getElementById('authPwd'); if(i){ i.value=''; i.focus(); }
+  }
+}

@@ -21,8 +21,8 @@
 <!-- Ajouter un module de Trésorerie qui va gérer le montant en caisse, sur Tmoney, sur flooz, en banque, générer les mouvement de trésorerie. pouvoir créer, modifier et supprimer un moyen de trésorerie. la trésorerie qui enregistre automatiquement les entrées et sortie d'argent -->
 
 
-Définir un mot de passe qui est nécessaire pour pouvoir accéder à la plateforme, pour faire une modification ou suppression on demande le mot de passe. ce mot de passe est configurable depuis le menu paramètre
-<!-- FAIT (accès) : écran de verrouillage au chargement, mdp défaut 1234, session 1h en localStorage (mirroils_auth), modifiable dans Paramètres → "Mot de passe d'accès" (mirroils_pwd), bouton "Verrouiller maintenant". RESTE : demander le mdp pour chaque modification/suppression. -->
+<!-- Définir un mot de passe qui est nécessaire pour pouvoir accéder à la plateforme, pour faire une modification ou suppression on demande le mot de passe. ce mot de passe est configurable depuis le menu paramètre -->
+<!-- FAIT : (1) Accès : écran de verrouillage au chargement, app non chargée tant que non authentifié, session 1h (localStorage mirroils_auth), mdp défaut 1234 stocké UNIQUEMENT dans data.json. (2) Configurable dans Paramètres → "Mot de passe d'accès" + "Verrouiller maintenant". (3) Modif/suppression : modal de confirmation par mot de passe (jeton usage-unique) en tête de 15 actions (delete/edit ventes, dépenses, clients, produits, comptes, mouvements, types, catégories, markSalePaid, réassort). -->
 
 
 <!-- Possibilité ajouter, modifier et supprimer les type de client depuis MENU client -->
