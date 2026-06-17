@@ -14,7 +14,7 @@ const url  = require('url');
 
 const PORT      = 3000;
 const ROOT      = __dirname;
-const INDEX     = 'mirr_oils(2).html';            // page d'accueil
+const INDEX     = 'index.html';            // page d'accueil
 const DATA_FILE = path.join(ROOT, 'data.json');
 
 const MIME = {
