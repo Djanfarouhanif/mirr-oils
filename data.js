@@ -31,6 +31,8 @@ var DB = {
   clients:      [],
   produits:     [],
   mouvements:   [],   // historique des mouvements de stock (réassorts, pertes)
+  comptes:      [],   // moyens de trésorerie (caisse, Tmoney, Flooz, banque…)
+  tresorerie:   [],   // mouvements de trésorerie MANUELS (dépôts, transferts, ajustements)
   nextId:       200,
   clientFilter: ''
 };

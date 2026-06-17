@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "app": "Mirr Oils",
-    "lastSaved": "2026-06-17T11:41:17.749Z"
+    "lastSaved": "2026-06-17T12:01:06.961Z"
   },
   "objectifs": {
     "caM": 1000000,
@@ -724,7 +724,7 @@
       "photo": ""
     }
   ],
-  "nextId": 214,
+  "nextId": 221,
   "mouvements": [
     {
       "id": 212,
@@ -761,6 +761,55 @@
       "type": "reassort",
       "delta": 3,
       "note": ""
+    }
+  ],
+  "comptes": [
+    {
+      "id": 214,
+      "name": "Caisse",
+      "type": "caisse",
+      "soldeInitial": 0,
+      "note": ""
+    },
+    {
+      "id": 215,
+      "name": "Tmoney",
+      "type": "tmoney",
+      "soldeInitial": 0,
+      "note": ""
+    },
+    {
+      "id": 216,
+      "name": "Flooz",
+      "type": "flooz",
+      "soldeInitial": 0,
+      "note": ""
+    },
+    {
+      "id": 217,
+      "name": "Banque",
+      "type": "banque",
+      "soldeInitial": 0,
+      "note": ""
+    }
+  ],
+  "tresorerie": [
+    {
+      "id": 220,
+      "date": "2026-06-17",
+      "sens": "sortie",
+      "compteId": 214,
+      "amount": 300000,
+      "motif": ""
+    },
+    {
+      "id": 219,
+      "date": "2026-06-17",
+      "sens": "transfert",
+      "compteId": 214,
+      "toCompteId": 215,
+      "amount": 1000000,
+      "motif": "Dépense personnel"
     }
   ]
 }

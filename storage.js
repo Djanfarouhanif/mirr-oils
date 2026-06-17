@@ -245,6 +245,8 @@ function updateSaveIndicator(isoDate) {
       clients:    data.clients    || [],
       produits:   data.produits   || [],
       mouvements: data.mouvements || [],
+      comptes:    data.comptes    || [],
+      tresorerie: data.tresorerie || [],
       nextId:     data.nextId     || 200,
       clientFilter: ''
     };

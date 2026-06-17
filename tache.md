@@ -11,6 +11,7 @@ Ajouter les statistiques de vente effectuer par client
 Enregistrement d'une vente, ajouter le champ de moyen de paiement, un autre champ qui implique si la facture est payé ou pas
 
 Enregistrement d'une dépense, ajouter le champ de moyen de décaissement
+
 Ajouter un module de Trésorerie qui va gérer le montant en caisse, sur Tmoney, sur flooz, en banque, générer les mouvement de trésorerie. pouvoir créer, modifier et supprimer un moyen de trésorerie. la trésorerie qui enregistre automatiquement les entrées et sortie d'argent
 
 

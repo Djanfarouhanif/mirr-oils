@@ -17,6 +17,8 @@ function _syncAndSave() {
     window._storageData.clients    = DB.clients;
     window._storageData.produits   = DB.produits;
     window._storageData.mouvements = DB.mouvements;
+    window._storageData.comptes    = DB.comptes;
+    window._storageData.tresorerie = DB.tresorerie;
     window._storageData.nextId     = DB.nextId;
     window._storageData.objectifs = OBJ;
     window._storageData.categories = [...CATEGORIES];
@@ -37,7 +39,7 @@ function navigate(page) {
   if(pe) pe.classList.add('active');
   const ne=document.querySelector(`.nav-item[data-page="${page}"]`);
   if(ne) ne.classList.add('active');
-  const T={dashboard:'Tableau de bord',stats:'Statistiques',ventes:'Ventes',depenses:'Depenses',clients:'Repertoire clients',produits:'Catalogue produits',rapports:'Rapports',objectifs:'Objectifs',parametres:'Parametres'};
+  const T={dashboard:'Tableau de bord',stats:'Statistiques',ventes:'Ventes',depenses:'Depenses',clients:'Repertoire clients',produits:'Catalogue produits',tresorerie:'Trésorerie',rapports:'Rapports',objectifs:'Objectifs',parametres:'Parametres'};
   document.getElementById('pageTitle').textContent = T[page]||page;
   if(page==='dashboard')  refreshDashboard();
   if(page==='stats')      refreshStats();
@@ -45,6 +47,7 @@ function navigate(page) {
   if(page==='depenses')   { renderDepenses(); updateDepStats(); }
   if(page==='clients')    { renderClients(); updateClientCounts(); }
   if(page==='produits')   renderProduits();
+  if(page==='tresorerie') renderTresorerie();
   if(page==='rapports')   { populateReportSelectors(); loadWeekReport(); loadMonthReport(); }
   if(page==='objectifs' || page==='parametres') syncObjectifsUI();
 }
@@ -111,11 +114,13 @@ function openModal(id) {
     document.getElementById('vAmount').value='';
     document.getElementById('vPriceType').value='client';
     ['vTotalHint','vUnitHint','vPriceHint','vRemiseHint'].forEach(x=>document.getElementById(x).textContent='');
+    const vc=document.getElementById('vCompte'); if(vc) vc.value=defaultCompteId();
   }
   if(id==='modalDepense' && !editingDepId) {
     document.getElementById('dDate').value=new Date().toISOString().slice(0,10);
     ['dCat','dDesig','dAmount','dNote'].forEach(x=>document.getElementById(x).value='');
     document.getElementById('dCat').value='';
+    const dc=document.getElementById('dCompte'); if(dc) dc.value=defaultCompteId();
   }
   if(id==='modalProduit' && !editingProdId) {
     // Création : titre + champs vierges (sinon les valeurs d'une édition précédente persistent)
@@ -398,6 +403,7 @@ function saveSale() {
   const amt=parseFloat(document.getElementById('vAmount').value)||0;
   const cli=document.getElementById('vClientName').value||document.getElementById('vClient').value||'--';
   const note=document.getElementById('vNote').value;
+  const compteId=parseInt(document.getElementById('vCompte').value)||defaultCompteId();   // compte encaissé
   if(!prod||!amt){toast('Produit et montant obligatoires','error');return false;}
 
   // Contrôle de stock : interdit de vendre plus que le stock disponible
@@ -421,14 +427,14 @@ function saveSale() {
       const old=window.DB.sales[idx];
       adjustStock(old.prod, old.qty);   // on remet l'ancienne quantité en stock...
       adjustStock(prod, -qty);          // ...puis on retire la nouvelle (gère changement de produit/qté)
-      window.DB.sales[idx]={...old,date,prod,qty,priceType:pt,unitPrice:unit,remise:rem,clientName:cli,amount:amt,note};
+      window.DB.sales[idx]={...old,date,prod,qty,priceType:pt,unitPrice:unit,remise:rem,clientName:cli,amount:amt,note,compteId};
     }
     _syncAndSave();
     toast('Vente modifiee et sauvegardee','success');
   } else {
     // CREATE
     adjustStock(prod, -qty);            // sortie de stock
-    window.DB.sales.unshift({id:window.DB.nextId++,date,prod,qty,priceType:pt,unitPrice:unit,remise:rem,clientName:cli,amount:amt,note});
+    window.DB.sales.unshift({id:window.DB.nextId++,date,prod,qty,priceType:pt,unitPrice:unit,remise:rem,clientName:cli,amount:amt,note,compteId});
     _syncAndSave();
     toast('Vente enregistree !','success');
   }
@@ -484,6 +490,7 @@ function editSale(id) {
     document.getElementById('vAmount').value=s.amount;
     document.getElementById('vClientName').value=s.clientName!=='--'?s.clientName:'';
     document.getElementById('vNote').value=s.note;
+    document.getElementById('vCompte').value=s.compteId||defaultCompteId();
     calcSaleTotal();
   },60);
 }
@@ -552,15 +559,16 @@ function saveDepense() {
   const desig=document.getElementById('dDesig').value;
   const amt=parseFloat(document.getElementById('dAmount').value)||0;
   const note=document.getElementById('dNote').value;
+  const compteId=parseInt(document.getElementById('dCompte').value)||defaultCompteId();   // compte débité
   if(!cat||!desig||!amt){toast('Categorie, designation et montant obligatoires','error');return;}
 
   if(editingDepId) {
     const idx=window.DB.depenses.findIndex(d=>d.id===editingDepId);
-    if(idx>=0) window.DB.depenses[idx]={...window.DB.depenses[idx],date,cat,desig,amount:amt,note};
+    if(idx>=0) window.DB.depenses[idx]={...window.DB.depenses[idx],date,cat,desig,amount:amt,note,compteId};
     _syncAndSave();
     toast('Depense modifiee et sauvegardee','success');
   } else {
-    window.DB.depenses.unshift({id:window.DB.nextId++,date,cat,desig,amount:amt,note});
+    window.DB.depenses.unshift({id:window.DB.nextId++,date,cat,desig,amount:amt,note,compteId});
     _syncAndSave();
     toast('Depense enregistree !','success');
   }
@@ -576,6 +584,7 @@ function editDepense(id) {
     document.getElementById('dDesig').value=d.desig;
     document.getElementById('dAmount').value=d.amount;
     document.getElementById('dNote').value=d.note;
+    document.getElementById('dCompte').value=d.compteId||defaultCompteId();
   },60);
 }
 
@@ -1272,6 +1281,204 @@ function generateReceiptPDF() {
 }
 
 // ============================================================
+// TRÉSORERIE — comptes + mouvements (auto depuis ventes/dépenses)
+// Soldes DÉRIVÉS : solde = soldeInitial + ventes(entrées) - dépenses(sorties)
+//                  + mouvements manuels (dépôts, transferts, ajustements)
+// ============================================================
+const COMPTE_TYPES = { caisse:'Caisse', tmoney:'Tmoney', flooz:'Flooz', banque:'Banque', autre:'Autre' };
+const COMPTE_ICON  = { caisse:'ti-cash', tmoney:'ti-device-mobile', flooz:'ti-device-mobile', banque:'ti-building-bank', autre:'ti-wallet' };
+let editingCompteId=null;
+
+/** Crée les comptes par défaut (Caisse, Tmoney, Flooz, Banque) si aucun n'existe. */
+function ensureDefaultComptes() {
+  if(window.DB.comptes && window.DB.comptes.length) return;
+  window.DB.comptes=[
+    {id:window.DB.nextId++,name:'Caisse',type:'caisse',soldeInitial:0,note:''},
+    {id:window.DB.nextId++,name:'Tmoney',type:'tmoney',soldeInitial:0,note:''},
+    {id:window.DB.nextId++,name:'Flooz', type:'flooz', soldeInitial:0,note:''},
+    {id:window.DB.nextId++,name:'Banque',type:'banque',soldeInitial:0,note:''}
+  ];
+  _syncAndSave();
+}
+/** Id du compte par défaut (le premier, en général la Caisse). */
+function defaultCompteId() {
+  return (window.DB.comptes && window.DB.comptes[0]) ? window.DB.comptes[0].id : null;
+}
+function compteName(id){const c=window.DB.comptes.find(x=>x.id===id);return c?c.name:'—';}
+
+/** Solde courant d'un compte = initial + entrées - sorties (ventes, dépenses, manuels, transferts). */
+function getCompteSolde(compteId) {
+  const c=window.DB.comptes.find(x=>x.id===compteId);
+  if(!c) return 0;
+  let s=c.soldeInitial||0;
+  const def=defaultCompteId();
+  window.DB.sales.forEach(v=>{ if((v.compteId||def)===compteId) s+=v.amount; });        // encaissements ventes
+  window.DB.depenses.forEach(d=>{ if((d.compteId||def)===compteId) s-=d.amount; });      // décaissements dépenses
+  (window.DB.tresorerie||[]).forEach(m=>{
+    if(m.sens==='entree'  && m.compteId===compteId) s+=m.amount;
+    else if(m.sens==='sortie' && m.compteId===compteId) s-=m.amount;
+    else if(m.sens==='transfert'){ if(m.compteId===compteId) s-=m.amount; if(m.toCompteId===compteId) s+=m.amount; }
+  });
+  return s;
+}
+
+/** Liste unifiée des mouvements (ventes + dépenses + manuels), triée par date décroissante. */
+function buildTresoMouvements() {
+  const def=defaultCompteId();
+  const list=[];
+  window.DB.sales.forEach(v=>list.push({date:v.date,compteId:v.compteId||def,sens:'entree',amount:v.amount,motif:'Vente — '+v.prod,source:'Vente',srcType:'vente',refId:v.id}));
+  window.DB.depenses.forEach(d=>list.push({date:d.date,compteId:d.compteId||def,sens:'sortie',amount:d.amount,motif:d.desig||d.cat,source:'Dépense',srcType:'depense',refId:d.id}));
+  (window.DB.tresorerie||[]).forEach(m=>{
+    if(m.sens==='transfert'){
+      list.push({date:m.date,compteId:m.compteId,sens:'sortie',amount:m.amount,motif:(m.motif||'Transfert')+' → '+compteName(m.toCompteId),source:'Transfert',srcType:'manuel',refId:m.id});
+      list.push({date:m.date,compteId:m.toCompteId,sens:'entree',amount:m.amount,motif:(m.motif||'Transfert')+' ← '+compteName(m.compteId),source:'Transfert',srcType:'manuel',refId:m.id});
+    } else {
+      list.push({date:m.date,compteId:m.compteId,sens:m.sens,amount:m.amount,motif:m.motif||(m.sens==='entree'?'Entrée':'Sortie'),source:'Manuel',srcType:'manuel',refId:m.id});
+    }
+  });
+  list.sort((a,b)=> a.date<b.date?1 : a.date>b.date?-1 : 0);
+  return list;
+}
+
+/** Remplit tous les <select> de comptes (ventes, dépenses, filtres, transferts). */
+function fillCompteSelectors() {
+  const opts=window.DB.comptes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  ['vCompte','dCompte','mvCompte','mvTo'].forEach(id=>{const e=document.getElementById(id); if(e){const cur=e.value; e.innerHTML=opts; if(cur)e.value=cur;}});
+  const f=document.getElementById('fTresoCompte');
+  if(f){const cur=f.value; f.innerHTML='<option value="">Tous les comptes</option>'+opts; if(cur)f.value=cur;}
+}
+
+/** Page Trésorerie : KPIs + cartes comptes + tableau des mouvements. */
+function renderTresorerie() {
+  ensureDefaultComptes();
+  fillCompteSelectors();
+  const total=window.DB.comptes.reduce((a,c)=>a+getCompteSolde(c.id),0);
+  const totIn=window.DB.sales.reduce((a,v)=>a+v.amount,0)+(window.DB.tresorerie||[]).filter(m=>m.sens==='entree').reduce((a,m)=>a+m.amount,0);
+  const totOut=window.DB.depenses.reduce((a,d)=>a+d.amount,0)+(window.DB.tresorerie||[]).filter(m=>m.sens==='sortie').reduce((a,m)=>a+m.amount,0);
+  document.getElementById('treso-total').textContent=fmt(total);
+  document.getElementById('treso-in').textContent=fmt(totIn);
+  document.getElementById('treso-out').textContent=fmt(totOut);
+  document.getElementById('treso-count').textContent=window.DB.comptes.length;
+
+  const cards=document.getElementById('comptesCards');
+  if(cards){
+    cards.innerHTML=window.DB.comptes.map(c=>{
+      const solde=getCompteSolde(c.id);
+      const icon=COMPTE_ICON[c.type]||'ti-wallet';
+      return `<div class="metric" style="position:relative">
+        <div class="metric-label"><i class="ti ${icon}"></i> ${c.name} <span class="badge b-default" style="margin-left:4px">${COMPTE_TYPES[c.type]||c.type}</span></div>
+        <div class="metric-value ${solde<0?'text-danger':''}">${fmt(solde)}</div>
+        <div class="metric-sub">XOF</div>
+        <div style="position:absolute;top:8px;right:8px;display:flex;gap:4px">
+          <button class="btn btn-xs" onclick="editCompte(${c.id})" title="Modifier"><i class="ti ti-edit"></i></button>
+          <button class="btn btn-xs btn-danger-outline" onclick="deleteCompte(${c.id})" title="Supprimer"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  const fc=document.getElementById('fTresoCompte').value;
+  const fsens=document.getElementById('fTresoSens').value;
+  let rows=buildTresoMouvements();
+  if(fc) rows=rows.filter(r=>String(r.compteId)===fc);
+  if(fsens) rows=rows.filter(r=>r.sens===fsens);
+  const body=document.getElementById('tresoBody'), empty=document.getElementById('tresoEmpty');
+  if(!rows.length){body.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  body.innerHTML=rows.map(r=>{
+    const sensBadge=r.sens==='entree'?'<span class="badge b-success">Entrée</span>':'<span class="badge b-danger">Sortie</span>';
+    const cls=r.sens==='entree'?'text-success':'text-danger';
+    const sign=r.sens==='entree'?'+':'-';
+    const del=r.srcType==='manuel'?`<button class="btn btn-xs btn-danger-outline" onclick="deleteMouvement(${r.refId})" title="Supprimer"><i class="ti ti-trash"></i></button>`:'<span class="text-muted fs-11">auto</span>';
+    return `<tr><td>${fmtD(r.date)}</td><td>${compteName(r.compteId)}</td><td>${sensBadge}</td><td>${r.motif}</td><td><span class="badge b-default">${r.source}</span></td><td class="text-right num ${cls} fw-600">${sign}${fmt(r.amount)}</td><td class="text-center">${del}</td></tr>`;
+  }).join('');
+}
+
+// ---- CRUD moyens de trésorerie ----
+function openCompte(){
+  editingCompteId=null;
+  document.getElementById('compteModalTitle').textContent='Nouveau moyen de trésorerie';
+  document.getElementById('coName').value='';
+  document.getElementById('coType').value='caisse';
+  document.getElementById('coSolde').value='0';
+  document.getElementById('coNote').value='';
+  openModal('modalCompte');
+}
+function editCompte(id){
+  const c=window.DB.comptes.find(x=>x.id===id); if(!c){toast('Compte introuvable','error');return;}
+  editingCompteId=id;
+  document.getElementById('compteModalTitle').textContent='Modifier le moyen';
+  document.getElementById('coName').value=c.name;
+  document.getElementById('coType').value=c.type;
+  document.getElementById('coSolde').value=c.soldeInitial||0;
+  document.getElementById('coNote').value=c.note||'';
+  openModal('modalCompte');
+}
+function saveCompte(){
+  const name=document.getElementById('coName').value.trim();
+  if(!name){toast('Nom obligatoire','error');return;}
+  const fields={name,type:document.getElementById('coType').value,soldeInitial:parseFloat(document.getElementById('coSolde').value)||0,note:document.getElementById('coNote').value};
+  if(editingCompteId){
+    const c=window.DB.comptes.find(x=>x.id===editingCompteId); if(c) Object.assign(c,fields);
+    toast('Moyen modifié !','success');
+  } else {
+    window.DB.comptes.push({id:window.DB.nextId++,...fields});
+    toast('Moyen ajouté !','success');
+  }
+  _syncAndSave();
+  closeModal('modalCompte'); fillCompteSelectors(); renderTresorerie();
+}
+function deleteCompte(id){
+  const def=defaultCompteId();
+  const used=window.DB.sales.some(v=>(v.compteId||def)===id)||window.DB.depenses.some(d=>(d.compteId||def)===id)||(window.DB.tresorerie||[]).some(m=>m.compteId===id||m.toCompteId===id);
+  if(used){toast('Impossible : ce moyen est utilisé par des ventes / dépenses / mouvements','error');return;}
+  if(window.DB.comptes.length<=1){toast('Au moins un moyen de trésorerie est requis','error');return;}
+  if(!confirm('Supprimer ce moyen de trésorerie ?'))return;
+  window.DB.comptes=window.DB.comptes.filter(c=>c.id!==id);
+  _syncAndSave(); fillCompteSelectors(); renderTresorerie(); toast('Moyen supprimé','success');
+}
+
+// ---- Mouvements manuels (dépôt, retrait, transfert) ----
+function onMvSensChange(){
+  const sens=document.getElementById('mvSens').value;
+  const toWrap=document.getElementById('mvToWrap');
+  const lbl=document.getElementById('mvCompteLbl');
+  if(sens==='transfert'){toWrap.style.display='block';lbl.innerHTML='Compte source <span class="req">*</span>';}
+  else{toWrap.style.display='none';lbl.innerHTML='Compte <span class="req">*</span>';}
+}
+function openMouvement(){
+  if(!window.DB.comptes.length){toast('Créez d\'abord un moyen de trésorerie','error');return;}
+  fillCompteSelectors();
+  document.getElementById('mvSens').value='entree';
+  document.getElementById('mvDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('mvAmount').value='';
+  document.getElementById('mvMotif').value='';
+  onMvSensChange();
+  openModal('modalMouvement');
+}
+function saveMouvement(){
+  const sens=document.getElementById('mvSens').value;
+  const date=document.getElementById('mvDate').value;
+  const amount=parseFloat(document.getElementById('mvAmount').value)||0;
+  const motif=document.getElementById('mvMotif').value;
+  const compteId=parseInt(document.getElementById('mvCompte').value);
+  if(amount<=0||!date){toast('Montant (>0) et date obligatoires','error');return;}
+  if(sens==='transfert'){
+    const toCompteId=parseInt(document.getElementById('mvTo').value);
+    if(toCompteId===compteId){toast('Choisissez deux comptes différents','error');return;}
+    window.DB.tresorerie.unshift({id:window.DB.nextId++,date,sens:'transfert',compteId,toCompteId,amount,motif});
+  } else {
+    window.DB.tresorerie.unshift({id:window.DB.nextId++,date,sens,compteId,amount,motif});
+  }
+  _syncAndSave(); closeModal('modalMouvement'); renderTresorerie(); toast('Mouvement enregistré !','success');
+}
+function deleteMouvement(id){
+  if(!confirm('Supprimer ce mouvement ?'))return;
+  window.DB.tresorerie=window.DB.tresorerie.filter(m=>m.id!==id);
+  _syncAndSave(); renderTresorerie(); toast('Mouvement supprimé','success');
+}
+
+// ============================================================
 // OBJECTIFS & PARAMETRES — avec persistance JSON
 // ============================================================
 /**
@@ -1372,6 +1579,8 @@ function appInit() {
     }
   } catch(e) {}
 
+  ensureDefaultComptes();
+  fillCompteSelectors();
   fillProductOptions();
   fillClientDropdown();
   populateDepCat();
