@@ -116,13 +116,20 @@ function openModal(id) {
     ['dCat','dDesig','dAmount','dNote'].forEach(x=>document.getElementById(x).value='');
     document.getElementById('dCat').value='';
   }
+  if(id==='modalProduit' && !editingProdId) {
+    // Création : titre + champs vierges (sinon les valeurs d'une édition précédente persistent)
+    const t=document.getElementById('prodModalTitle'); if(t) t.textContent='Nouveau produit';
+    ['pName','pCond','pPM','pPG','pUnit','pAlerte'].forEach(x=>document.getElementById(x).value='');
+    document.getElementById('pPC').value='';
+    document.getElementById('pStock').value='0';
+  }
 }
 function closeModal(id) {
   const m=document.getElementById(id);
   if(!m) return;
   m.classList.remove('open');
   setTimeout(()=>{m.style.display='none'},200);
-  editingSaleId=null; editingDepId=null;
+  editingSaleId=null; editingDepId=null; editingProdId=null;
 }
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
 
@@ -641,14 +648,65 @@ function updateClientCounts() {
 // PRODUITS — CRUD avec persistance JSON
 // ============================================================
 
-/** SAVE PRODUIT + persistance JSON */
+/** SAVE PRODUIT — CREATE ou UPDATE + persistance JSON */
 function saveProduit() {
   const name=document.getElementById('pName').value;
   const pc=parseFloat(document.getElementById('pPC').value)||0;
   if(!name||!pc){toast('Nom et prix client obligatoires','error');return;}
-  window.DB.produits.push({id:window.DB.nextId++,name,cond:document.getElementById('pCond').value,pc,pm:parseFloat(document.getElementById('pPM').value)||0,pg:parseFloat(document.getElementById('pPG').value)||0,unit:document.getElementById('pUnit').value,stock:parseInt(document.getElementById('pStock').value)||0,alerte:parseInt(document.getElementById('pAlerte').value)||0});
-  _syncAndSave();
-  closeModal('modalProduit'); renderProduits(); fillProductOptions(); toast('Produit ajoute !','success');
+  const fields={
+    name,
+    cond:document.getElementById('pCond').value,
+    pc,
+    pm:parseFloat(document.getElementById('pPM').value)||0,
+    pg:parseFloat(document.getElementById('pPG').value)||0,
+    unit:document.getElementById('pUnit').value,
+    stock:parseInt(document.getElementById('pStock').value)||0,
+    alerte:parseInt(document.getElementById('pAlerte').value)||0
+  };
+
+  if(editingProdId) {
+    // UPDATE
+    const p=window.DB.produits.find(x=>x.id===editingProdId);
+    if(p) {
+      const oldName=p.name, oldStock=p.stock||0;
+      Object.assign(p, fields);
+      // Si le stock a été modifié à la main, on journalise un ajustement (pour garder l'historique cohérent)
+      const delta=fields.stock-oldStock;
+      if(delta!==0){
+        window.DB.mouvements=window.DB.mouvements||[];
+        window.DB.mouvements.unshift({id:window.DB.nextId++,prodId:p.id,prod:p.name,date:new Date().toISOString().slice(0,10),type:'ajustement',delta,note:'Modification fiche produit'});
+      }
+      // Si le nom a changé, on répercute sur les ventes et mouvements existants
+      if(oldName!==fields.name){
+        window.DB.sales.forEach(s=>{if(s.prod===oldName)s.prod=fields.name;});
+        (window.DB.mouvements||[]).forEach(m=>{if(m.prod===oldName)m.prod=fields.name;});
+      }
+    }
+    _syncAndSave();
+    closeModal('modalProduit'); renderProduits(); fillProductOptions(); refreshDashboard(); toast('Produit modifié !','success');
+  } else {
+    // CREATE
+    window.DB.produits.push({id:window.DB.nextId++,...fields});
+    _syncAndSave();
+    closeModal('modalProduit'); renderProduits(); fillProductOptions(); toast('Produit ajoute !','success');
+  }
+}
+
+/** Ouvre le formulaire produit pré-rempli pour modification. */
+function editProduit(id) {
+  const p=window.DB.produits.find(x=>x.id===id);
+  if(!p){toast('Produit introuvable','error');return;}
+  editingProdId=id;
+  const t=document.getElementById('prodModalTitle'); if(t) t.textContent='Modifier le produit';
+  document.getElementById('pName').value=p.name||'';
+  document.getElementById('pCond').value=p.cond||'';
+  document.getElementById('pPC').value=p.pc||'';
+  document.getElementById('pPM').value=p.pm||'';
+  document.getElementById('pPG').value=p.pg||'';
+  document.getElementById('pUnit').value=p.unit||'';
+  document.getElementById('pStock').value=p.stock||0;
+  document.getElementById('pAlerte').value=p.alerte||0;
+  openModal('modalProduit');
 }
 
 /** DELETE PRODUIT + persistance JSON */
@@ -662,7 +720,7 @@ function deleteProduit(id) {
 function renderProduits() {
   document.getElementById('prodBody').innerHTML=window.DB.produits.map(p=>{
     const sb=p.stock===0?`<span class="dot dot-red" style="margin-right:4px"></span>Rupture`:p.stock<=p.alerte?`<span class="dot dot-orange" style="margin-right:4px"></span>Faible (${p.stock})`:`<span class="dot dot-green" style="margin-right:4px"></span>En stock (${p.stock})`;
-    return`<tr><td><strong style="cursor:pointer;color:var(--primary)" onclick="showStockChart(${p.id})" title="Voir l'évolution du stock">${p.name}</strong></td><td>${p.cond||'--'}</td><td class="text-right num">${fmt(p.pc)}</td><td class="text-right num">${fmt(p.pm)}</td><td class="text-right num">${fmt(p.pg)}</td><td style="font-size:12px">${sb}</td><td class="text-center" style="white-space:nowrap"><button class="btn btn-xs" onclick="showStockChart(${p.id})" title="Évolution du stock"><i class="ti ti-chart-line"></i></button><button class="btn btn-xs" onclick="openReassort(${p.id})" title="Réapprovisionner / ajuster le stock"><i class="ti ti-package"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteProduit(${p.id})"><i class="ti ti-trash"></i></button></td></tr>`;
+    return`<tr><td><strong style="cursor:pointer;color:var(--primary)" onclick="showStockChart(${p.id})" title="Voir l'évolution du stock">${p.name}</strong></td><td>${p.cond||'--'}</td><td class="text-right num">${fmt(p.pc)}</td><td class="text-right num">${fmt(p.pm)}</td><td class="text-right num">${fmt(p.pg)}</td><td style="font-size:12px">${sb}</td><td class="text-center" style="white-space:nowrap"><button class="btn btn-xs" onclick="editProduit(${p.id})" title="Modifier le produit"><i class="ti ti-edit"></i></button><button class="btn btn-xs" onclick="showStockChart(${p.id})" title="Évolution du stock"><i class="ti ti-chart-line"></i></button><button class="btn btn-xs" onclick="openReassort(${p.id})" title="Réapprovisionner / ajuster le stock"><i class="ti ti-package"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteProduit(${p.id})"><i class="ti ti-trash"></i></button></td></tr>`;
   }).join('');
 }
 
@@ -683,8 +741,9 @@ function buildStockHistory(p) {
   const initial = current - ledgerSum + totalSold;
 
   const events = [];
+  const LBL = { reassort: 'Réassort', perte: 'Perte', ajustement: 'Ajustement' };
   sales.forEach(s => events.push({ date: s.date, delta: -(s.qty || 0), label: 'Vente', note: s.clientName && s.clientName !== '--' ? s.clientName : '' }));
-  moves.forEach(m => events.push({ date: m.date, delta: m.delta || 0, label: m.type === 'reassort' ? 'Réassort' : 'Perte', note: m.note || '' }));
+  moves.forEach(m => events.push({ date: m.date, delta: m.delta || 0, label: LBL[m.type] || 'Mouvement', note: m.note || '' }));
   // tri par date ; à date égale, entrées (+) avant sorties (−)
   events.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (b.delta - a.delta));
   return { events, initial, current, totalSold };
@@ -721,7 +780,7 @@ function showStockChart(id) {
     body.innerHTML = rows.length
       ? rows.slice().reverse().map(r=>{
           const cls=r.delta>=0?'text-success':'text-danger';
-          const badge=r.label==='Vente'?'b-client':r.label==='Réassort'?'b-success':'b-danger';
+          const badge=r.label==='Vente'?'b-client':(r.delta>=0?'b-success':'b-danger');
           return `<tr><td>${fmtD(r.date)}</td><td><span class="badge ${badge}">${r.label}</span></td><td class="text-right num ${cls}">${r.delta>=0?'+':''}${r.delta}</td><td class="text-right num">${r.after}</td><td class="fs-11 text-muted">${r.note||''}</td></tr>`;
         }).join('')
       : '<tr><td colspan="5" class="text-center text-muted" style="padding:16px">Aucun mouvement</td></tr>';

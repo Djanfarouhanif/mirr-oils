@@ -38,6 +38,7 @@ var DB = {
 // Variables d'état UI
 let editingSaleId  = null;
 let editingDepId   = null;
+let editingProdId  = null;
 let statPeriod     = 'week';
 let chartInstances = {};
 
