@@ -1389,7 +1389,7 @@ function renderTresorerie() {
     const sensBadge=r.sens==='entree'?'<span class="badge b-success">Entrée</span>':'<span class="badge b-danger">Sortie</span>';
     const cls=r.sens==='entree'?'text-success':'text-danger';
     const sign=r.sens==='entree'?'+':'-';
-    const del=r.srcType==='manuel'?`<button class="btn btn-xs btn-danger-outline" onclick="deleteMouvement(${r.refId})" title="Supprimer"><i class="ti ti-trash"></i></button>`:'<span class="text-muted fs-11">auto</span>';
+    const del=r.srcType==='manuel'?`<button class="btn btn-xs" onclick="editMouvement(${r.refId})" title="Modifier"><i class="ti ti-edit"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteMouvement(${r.refId})" title="Supprimer"><i class="ti ti-trash"></i></button>`:'<span class="text-muted fs-11">auto</span>';
     return `<tr><td>${fmtD(r.date)}</td><td>${compteName(r.compteId)}</td><td>${sensBadge}</td><td>${r.motif}</td><td><span class="badge b-default">${r.source}</span></td><td class="text-right num ${cls} fw-600">${sign}${fmt(r.amount)}</td><td class="text-center">${del}</td></tr>`;
   }).join('');
 }
@@ -1439,6 +1439,8 @@ function deleteCompte(id){
 }
 
 // ---- Mouvements manuels (dépôt, retrait, transfert) ----
+let editingMouvementId=null;
+
 function onMvSensChange(){
   const sens=document.getElementById('mvSens').value;
   const toWrap=document.getElementById('mvToWrap');
@@ -1448,12 +1450,30 @@ function onMvSensChange(){
 }
 function openMouvement(){
   if(!window.DB.comptes.length){toast('Créez d\'abord un moyen de trésorerie','error');return;}
+  editingMouvementId=null;
+  document.getElementById('mvModalTitle').textContent='Nouveau mouvement';
   fillCompteSelectors();
   document.getElementById('mvSens').value='entree';
   document.getElementById('mvDate').value=new Date().toISOString().slice(0,10);
   document.getElementById('mvAmount').value='';
   document.getElementById('mvMotif').value='';
   onMvSensChange();
+  openModal('modalMouvement');
+}
+/** Ouvre le formulaire pré-rempli pour modifier un mouvement MANUEL existant. */
+function editMouvement(id){
+  const m=(window.DB.tresorerie||[]).find(x=>x.id===id);
+  if(!m){toast('Mouvement introuvable','error');return;}
+  editingMouvementId=id;
+  document.getElementById('mvModalTitle').textContent='Modifier le mouvement';
+  fillCompteSelectors();
+  document.getElementById('mvSens').value=m.sens;
+  document.getElementById('mvDate').value=m.date;
+  document.getElementById('mvAmount').value=m.amount;
+  document.getElementById('mvMotif').value=m.motif||'';
+  document.getElementById('mvCompte').value=m.compteId;
+  onMvSensChange();
+  if(m.sens==='transfert') document.getElementById('mvTo').value=m.toCompteId;
   openModal('modalMouvement');
 }
 function saveMouvement(){
@@ -1463,14 +1483,22 @@ function saveMouvement(){
   const motif=document.getElementById('mvMotif').value;
   const compteId=parseInt(document.getElementById('mvCompte').value);
   if(amount<=0||!date){toast('Montant (>0) et date obligatoires','error');return;}
+  let rec={date,sens,compteId,amount,motif};
   if(sens==='transfert'){
     const toCompteId=parseInt(document.getElementById('mvTo').value);
     if(toCompteId===compteId){toast('Choisissez deux comptes différents','error');return;}
-    window.DB.tresorerie.unshift({id:window.DB.nextId++,date,sens:'transfert',compteId,toCompteId,amount,motif});
-  } else {
-    window.DB.tresorerie.unshift({id:window.DB.nextId++,date,sens,compteId,amount,motif});
+    rec.toCompteId=toCompteId;
   }
-  _syncAndSave(); closeModal('modalMouvement'); renderTresorerie(); toast('Mouvement enregistré !','success');
+  if(editingMouvementId){
+    const m=window.DB.tresorerie.find(x=>x.id===editingMouvementId);
+    if(m){ delete m.toCompteId; Object.assign(m, rec); }   // delete d'abord (cas transfert -> entrée/sortie)
+    toast('Mouvement modifié !','success');
+  } else {
+    window.DB.tresorerie.unshift({id:window.DB.nextId++,...rec});
+    toast('Mouvement enregistré !','success');
+  }
+  editingMouvementId=null;
+  _syncAndSave(); closeModal('modalMouvement'); renderTresorerie();
 }
 function deleteMouvement(id){
   if(!confirm('Supprimer ce mouvement ?'))return;

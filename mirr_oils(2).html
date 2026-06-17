@@ -550,7 +550,7 @@
 
 <div class="modal-overlay" id="modalMouvement">
   <div class="modal modal-sm">
-    <div class="modal-header"><span class="modal-title"><i class="ti ti-arrows-exchange" style="margin-right:8px;color:var(--primary)"></i>Mouvement de trésorerie</span><button class="modal-close" onclick="closeModal('modalMouvement')">x</button></div>
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-arrows-exchange" style="margin-right:8px;color:var(--primary)"></i><span id="mvModalTitle">Nouveau mouvement</span></span><button class="modal-close" onclick="closeModal('modalMouvement')">x</button></div>
     <div class="modal-body">
       <div class="form-row cols-2">
         <div class="form-group"><label class="lbl">Type</label><select id="mvSens" onchange="onMvSensChange()"><option value="entree">Entrée (+)</option><option value="sortie">Sortie (−)</option><option value="transfert">Transfert entre comptes</option></select></div>
