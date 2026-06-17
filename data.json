@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "app": "Mirr Oils",
-    "lastSaved": "2026-06-17T10:05:07.565Z"
+    "lastSaved": "2026-06-17T10:38:13.338Z"
   },
   "objectifs": {
     "caM": 12000000,
@@ -18,6 +18,30 @@
     "Autre"
   ],
   "sales": [
+    {
+      "id": 205,
+      "date": "2026-06-17",
+      "prod": "mozar",
+      "qty": 10,
+      "priceType": "grossiste",
+      "unitPrice": 100,
+      "remise": 0,
+      "clientName": "GDM Sarl",
+      "amount": 1000,
+      "note": ""
+    },
+    {
+      "id": 203,
+      "date": "2026-06-17",
+      "prod": "T-cross 4T (12x1L)",
+      "qty": 12,
+      "priceType": "mecanicien",
+      "unitPrice": 25000,
+      "remise": 0,
+      "clientName": "GDM Sarl",
+      "amount": 300000,
+      "note": ""
+    },
     {
       "id": 1,
       "date": "2026-06-08",
@@ -651,7 +675,18 @@
       "unit": "--",
       "stock": 999,
       "alerte": 0
+    },
+    {
+      "id": 202,
+      "name": "mozar",
+      "cond": "budon ",
+      "pc": 600,
+      "pm": 200,
+      "pg": 100,
+      "unit": "50",
+      "stock": -7,
+      "alerte": 2
     }
   ],
-  "nextId": 202
+  "nextId": 206
 }

@@ -358,6 +358,19 @@ function calcSaleTotal() {
   }
 }
 
+/**
+ * Ajuste le stock d'un produit (par son nom) d'une quantité donnée.
+ * delta négatif = sortie de stock (vente) ; positif = retour en stock.
+ * Sans effet si le produit n'existe pas (ex. « Reglement client », « Autres »).
+ * @param {string} prodName
+ * @param {number} delta
+ */
+function adjustStock(prodName, delta) {
+  const p = window.DB.produits.find(x => x.name === prodName);
+  if (!p) return;
+  p.stock = (p.stock || 0) + delta;
+}
+
 /** SAVE VENTE — CREATE ou UPDATE + persistance JSON */
 function saveSale() {
   const date=document.getElementById('vDate').value;
@@ -374,16 +387,22 @@ function saveSale() {
   if(editingSaleId) {
     // UPDATE
     const idx=window.DB.sales.findIndex(s=>s.id===editingSaleId);
-    if(idx>=0) window.DB.sales[idx]={...window.DB.sales[idx],date,prod,qty,priceType:pt,unitPrice:unit,remise:rem,clientName:cli,amount:amt,note};
+    if(idx>=0) {
+      const old=window.DB.sales[idx];
+      adjustStock(old.prod, old.qty);   // on remet l'ancienne quantité en stock...
+      adjustStock(prod, -qty);          // ...puis on retire la nouvelle (gère changement de produit/qté)
+      window.DB.sales[idx]={...old,date,prod,qty,priceType:pt,unitPrice:unit,remise:rem,clientName:cli,amount:amt,note};
+    }
     _syncAndSave();
     toast('Vente modifiee et sauvegardee','success');
   } else {
     // CREATE
+    adjustStock(prod, -qty);            // sortie de stock
     window.DB.sales.unshift({id:window.DB.nextId++,date,prod,qty,priceType:pt,unitPrice:unit,remise:rem,clientName:cli,amount:amt,note});
     _syncAndSave();
     toast('Vente enregistree !','success');
   }
-  editingSaleId=null; closeModal('modalVente'); renderSales(); updateSaleStats();
+  editingSaleId=null; closeModal('modalVente'); renderSales(); updateSaleStats(); renderProduits(); refreshDashboard();
 }
 
 function saveAndReceipt() {
@@ -441,9 +460,11 @@ function editSale(id) {
 /** DELETE VENTE + persistance JSON */
 function deleteSale(id) {
   if(!confirm('Supprimer cette vente ?'))return;
+  const s=window.DB.sales.find(x=>x.id===id);
+  if(s) adjustStock(s.prod, s.qty);   // la vente est annulée → on restitue le stock
   window.DB.sales=window.DB.sales.filter(s=>s.id!==id);
   _syncAndSave();
-  renderSales(); updateSaleStats(); toast('Vente supprimee','success');
+  renderSales(); updateSaleStats(); renderProduits(); refreshDashboard(); toast('Vente supprimee','success');
 }
 
 function renderSales() {

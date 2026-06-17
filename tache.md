@@ -1,5 +1,5 @@
 # Tache
-stocker l'etas de la page dans localStorage
+<!-- stocker l'etas de la page dans localStorage -->
 ajouter la section Stock puis les récuperer dynamiquement
 gere côté raport dynamiquement
 Corriger le format des chiffres sur le pdf
