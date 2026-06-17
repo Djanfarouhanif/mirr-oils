@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "app": "Mirr Oils",
-    "lastSaved": "2026-06-17T10:47:51.723Z"
+    "lastSaved": "2026-06-17T11:01:45.974Z"
   },
   "objectifs": {
     "caM": 12000000,
@@ -564,7 +564,7 @@
       "pm": 25000,
       "pg": 23500,
       "unit": "carton",
-      "stock": 20,
+      "stock": 33,
       "alerte": 5
     },
     {
@@ -700,5 +700,25 @@
       "alerte": 2
     }
   ],
-  "nextId": 208
+  "nextId": 210,
+  "mouvements": [
+    {
+      "id": 209,
+      "prodId": 2,
+      "prod": "T-cross 4T (12x1L)",
+      "date": "2026-06-17",
+      "type": "reassort",
+      "delta": 10,
+      "note": ""
+    },
+    {
+      "id": 208,
+      "prodId": 2,
+      "prod": "T-cross 4T (12x1L)",
+      "date": "2026-06-17",
+      "type": "reassort",
+      "delta": 3,
+      "note": ""
+    }
+  ]
 }

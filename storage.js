@@ -240,11 +240,12 @@ function updateSaveIndicator(isoDate) {
 
     // Injection dans les variables globales attendues par script.js
     window.DB = {
-      sales:     data.sales    || [],
-      depenses:  data.depenses || [],
-      clients:   data.clients  || [],
-      produits:  data.produits || [],
-      nextId:    data.nextId   || 200,
+      sales:      data.sales      || [],
+      depenses:   data.depenses   || [],
+      clients:    data.clients    || [],
+      produits:   data.produits   || [],
+      mouvements: data.mouvements || [],
+      nextId:     data.nextId     || 200,
       clientFilter: ''
     };
 

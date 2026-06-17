@@ -464,6 +464,40 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modalReassort">
+  <div class="modal modal-sm">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-package" style="margin-right:8px;color:var(--primary)"></i>Mouvement de stock</span><button class="modal-close" onclick="closeModal('modalReassort')">x</button></div>
+    <div class="modal-body">
+      <p class="fs-13" style="margin-bottom:12px">Produit : <strong id="reassortProdName">--</strong> — stock actuel : <strong id="reassortCurrent">0</strong></p>
+      <div class="form-row cols-2">
+        <div class="form-group"><label class="lbl">Type</label><select id="reassortType"><option value="reassort">Réapprovisionnement (+)</option><option value="perte">Perte / casse (−)</option></select></div>
+        <div class="form-group"><label class="lbl">Quantité <span class="req">*</span></label><input type="number" id="reassortQty" min="1" placeholder="0"></div>
+      </div>
+      <div class="form-group"><label class="lbl">Date <span class="req">*</span></label><input type="date" id="reassortDate"></div>
+      <div class="form-group"><label class="lbl">Note</label><input type="text" id="reassortNote" placeholder="ex: livraison fournisseur"></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modalReassort')">Annuler</button><button class="btn btn-primary" onclick="saveReassort()"><i class="ti ti-device-floppy"></i> Enregistrer</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalStock">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title"><i class="ti ti-chart-line" style="margin-right:8px;color:var(--primary)"></i><span id="stockModalTitle">Evolution du stock</span></span><button class="modal-close" onclick="closeModal('modalStock')">x</button></div>
+    <div class="modal-body">
+      <div class="g4" style="margin-bottom:16px">
+        <div class="metric m-green"><div class="metric-label">Stock actuel</div><div class="metric-value" id="stkCurrent">0</div></div>
+        <div class="metric m-blue"><div class="metric-label">Stock initial</div><div class="metric-value" id="stkInitial">0</div></div>
+        <div class="metric m-red"><div class="metric-label">Total vendu</div><div class="metric-value" id="stkSold">0</div></div>
+        <div class="metric m-orange"><div class="metric-label">Seuil alerte</div><div class="metric-value" id="stkAlerte">0</div></div>
+      </div>
+      <div style="position:relative;height:280px"><canvas id="chartStock"></canvas></div>
+      <div class="card-title" style="margin:16px 0 8px"><i class="ti ti-list-details"></i> Mouvements de stock</div>
+      <div class="tbl-wrap" style="max-height:200px;overflow:auto"><table><thead><tr><th>Date</th><th>Mouvement</th><th class="text-right">Qté</th><th class="text-right">Stock après</th><th>Note</th></tr></thead><tbody id="stockMovesBody"></tbody></table></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modalStock');openReassort(window._stockModalProdId)"><i class="ti ti-package"></i> Réapprovisionner</button><button class="btn" onclick="closeModal('modalStock')">Fermer</button></div>
+  </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 </div></div></div>
   <script src="storage.js"></script>

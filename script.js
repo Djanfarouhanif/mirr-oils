@@ -12,11 +12,12 @@ const hexRgba = (h,a) => { const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(
 // Helper : synchronise DB.nextId vers _storageData puis sauvegarde
 function _syncAndSave() {
   if (window._storageData) {
-    window._storageData.sales     = DB.sales;
-    window._storageData.depenses  = DB.depenses;
-    window._storageData.clients   = DB.clients;
-    window._storageData.produits  = DB.produits;
-    window._storageData.nextId    = DB.nextId;
+    window._storageData.sales      = DB.sales;
+    window._storageData.depenses   = DB.depenses;
+    window._storageData.clients    = DB.clients;
+    window._storageData.produits   = DB.produits;
+    window._storageData.mouvements = DB.mouvements;
+    window._storageData.nextId     = DB.nextId;
     window._storageData.objectifs = OBJ;
     window._storageData.categories = [...CATEGORIES];
     storageSave(window._storageData);
@@ -205,7 +206,7 @@ function renderProductBanner() {
   b.innerHTML=window.DB.produits.filter(p=>p.name!=='Reglement client').map(p=>{
     const sc=p.stock===0?'dot-red':p.stock<=p.alerte?'dot-orange':'dot-green';
     const price=p[priceKey]||0;
-    return`<div class="product-card" onclick="navigate('produits')">
+    return`<div class="product-card" style="cursor:pointer" onclick="showStockChart(${p.id})" title="Évolution du stock">
       <div class="pc-stock dot ${sc}"></div>
       <span class="pc-icon">&#128722;</span>
       <div class="pc-name">${p.name}</div>
@@ -661,8 +662,131 @@ function deleteProduit(id) {
 function renderProduits() {
   document.getElementById('prodBody').innerHTML=window.DB.produits.map(p=>{
     const sb=p.stock===0?`<span class="dot dot-red" style="margin-right:4px"></span>Rupture`:p.stock<=p.alerte?`<span class="dot dot-orange" style="margin-right:4px"></span>Faible (${p.stock})`:`<span class="dot dot-green" style="margin-right:4px"></span>En stock (${p.stock})`;
-    return`<tr><td><strong>${p.name}</strong></td><td>${p.cond||'--'}</td><td class="text-right num">${fmt(p.pc)}</td><td class="text-right num">${fmt(p.pm)}</td><td class="text-right num">${fmt(p.pg)}</td><td style="font-size:12px">${sb}</td><td class="text-center" style="white-space:nowrap"><button class="btn btn-xs"><i class="ti ti-edit"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteProduit(${p.id})"><i class="ti ti-trash"></i></button></td></tr>`;
+    return`<tr><td><strong style="cursor:pointer;color:var(--primary)" onclick="showStockChart(${p.id})" title="Voir l'évolution du stock">${p.name}</strong></td><td>${p.cond||'--'}</td><td class="text-right num">${fmt(p.pc)}</td><td class="text-right num">${fmt(p.pm)}</td><td class="text-right num">${fmt(p.pg)}</td><td style="font-size:12px">${sb}</td><td class="text-center" style="white-space:nowrap"><button class="btn btn-xs" onclick="showStockChart(${p.id})" title="Évolution du stock"><i class="ti ti-chart-line"></i></button><button class="btn btn-xs" onclick="openReassort(${p.id})" title="Réapprovisionner / ajuster le stock"><i class="ti ti-package"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteProduit(${p.id})"><i class="ti ti-trash"></i></button></td></tr>`;
   }).join('');
+}
+
+let stockChartInstance=null;
+
+/**
+ * Construit la liste chronologique des mouvements de stock d'un produit :
+ * ventes (sorties) + mouvements du registre (réassorts/pertes), triés par date.
+ * @returns {{events:Array, initial:number, current:number, totalSold:number}}
+ */
+function buildStockHistory(p) {
+  const sales = window.DB.sales.filter(s => s.prod === p.name);
+  const moves = (window.DB.mouvements || []).filter(m => m.prodId === p.id || m.prod === p.name);
+  const totalSold = sales.reduce((a, s) => a + (s.qty || 0), 0);
+  const ledgerSum = moves.reduce((a, m) => a + (m.delta || 0), 0);
+  const current = p.stock || 0;
+  // Stock au tout début = actuel - (entrées/sorties du registre) + total vendu
+  const initial = current - ledgerSum + totalSold;
+
+  const events = [];
+  sales.forEach(s => events.push({ date: s.date, delta: -(s.qty || 0), label: 'Vente', note: s.clientName && s.clientName !== '--' ? s.clientName : '' }));
+  moves.forEach(m => events.push({ date: m.date, delta: m.delta || 0, label: m.type === 'reassort' ? 'Réassort' : 'Perte', note: m.note || '' }));
+  // tri par date ; à date égale, entrées (+) avant sorties (−)
+  events.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (b.delta - a.delta));
+  return { events, initial, current, totalSold };
+}
+
+/**
+ * Affiche un pop-up : graphe + tableau de l'évolution du stock d'un produit.
+ * Historique réel = ventes + mouvements enregistrés (réassorts, pertes).
+ * @param {number} id id du produit
+ */
+function showStockChart(id) {
+  const p=window.DB.produits.find(x=>x.id===id);
+  if(!p){toast('Produit introuvable','error');return;}
+  window._stockModalProdId=id;
+  const {events,initial,current,totalSold}=buildStockHistory(p);
+
+  // Courbe : point de départ puis cumul après chaque événement
+  const labels=['Départ'], data=[initial];
+  let running=initial;
+  const rows=[];   // pour le tableau (avec stock après chaque mouvement)
+  events.forEach(e=>{running+=e.delta; labels.push(fmtD(e.date)); data.push(running); rows.push({...e, after:running});});
+  if(!events.length){labels.push('Actuel');data.push(current);}
+
+  // Résumé chiffré
+  document.getElementById('stockModalTitle').textContent='Évolution du stock — '+p.name;
+  document.getElementById('stkCurrent').textContent=current;
+  document.getElementById('stkInitial').textContent=initial;
+  document.getElementById('stkSold').textContent=totalSold;
+  document.getElementById('stkAlerte').textContent=p.alerte||0;
+
+  // Tableau des mouvements (du plus récent au plus ancien)
+  const body=document.getElementById('stockMovesBody');
+  if(body){
+    body.innerHTML = rows.length
+      ? rows.slice().reverse().map(r=>{
+          const cls=r.delta>=0?'text-success':'text-danger';
+          const badge=r.label==='Vente'?'b-client':r.label==='Réassort'?'b-success':'b-danger';
+          return `<tr><td>${fmtD(r.date)}</td><td><span class="badge ${badge}">${r.label}</span></td><td class="text-right num ${cls}">${r.delta>=0?'+':''}${r.delta}</td><td class="text-right num">${r.after}</td><td class="fs-11 text-muted">${r.note||''}</td></tr>`;
+        }).join('')
+      : '<tr><td colspan="5" class="text-center text-muted" style="padding:16px">Aucun mouvement</td></tr>';
+  }
+
+  openModal('modalStock');
+
+  // Construit le graphe après ouverture (le canvas doit avoir une taille)
+  setTimeout(()=>{
+    const canvas=document.getElementById('chartStock');
+    if(!canvas)return;
+    if(stockChartInstance){try{stockChartInstance.destroy()}catch(e){}}
+    const dark=document.body.dataset.theme==='dark';
+    const tc=dark?'#A8A8A8':'#555', gc=dark?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)';
+    const unit=p.unit||'u.';
+    stockChartInstance=new Chart(canvas,{
+      type:'line',
+      data:{labels,datasets:[
+        {label:'Stock',data,borderColor:'#C0392B',backgroundColor:'rgba(192,57,43,.1)',tension:.3,fill:true,pointRadius:3,pointBackgroundColor:'#C0392B'},
+        {label:'Seuil alerte',data:labels.map(()=>p.alerte||0),borderColor:'#E67E22',borderDash:[6,4],pointRadius:0,fill:false}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,labels:{color:tc,font:{size:11},boxWidth:12}},
+          tooltip:{callbacks:{label:ctx=>' '+ctx.dataset.label+': '+ctx.parsed.y+' '+unit}}},
+        scales:{x:{ticks:{color:tc,font:{size:10},maxRotation:30},grid:{color:gc}},
+          y:{beginAtZero:true,ticks:{color:tc,font:{size:10}},grid:{color:gc}}}}
+    });
+  },80);
+}
+
+let reassortProdId=null;
+/** Ouvre le formulaire de mouvement de stock (réassort / perte) pour un produit. */
+function openReassort(id) {
+  const p=window.DB.produits.find(x=>x.id===id);
+  if(!p){toast('Produit introuvable','error');return;}
+  reassortProdId=id;
+  document.getElementById('reassortProdName').textContent=p.name;
+  document.getElementById('reassortCurrent').textContent=p.stock||0;
+  document.getElementById('reassortType').value='reassort';
+  document.getElementById('reassortQty').value='';
+  document.getElementById('reassortDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('reassortNote').value='';
+  openModal('modalReassort');
+}
+
+/** Enregistre un mouvement de stock + persistance JSON. */
+function saveReassort() {
+  const p=window.DB.produits.find(x=>x.id===reassortProdId);
+  if(!p){toast('Produit introuvable','error');return;}
+  const type=document.getElementById('reassortType').value;
+  const qty=parseFloat(document.getElementById('reassortQty').value)||0;
+  const date=document.getElementById('reassortDate').value;
+  const note=document.getElementById('reassortNote').value;
+  if(qty<=0||!date){toast('Quantité (>0) et date obligatoires','error');return;}
+  if(type==='perte' && qty>(p.stock||0)){toast(`Impossible : perte (${qty}) supérieure au stock (${p.stock||0})`,'error');return;}
+
+  const delta=type==='reassort'?qty:-qty;
+  p.stock=(p.stock||0)+delta;
+  window.DB.mouvements=window.DB.mouvements||[];
+  window.DB.mouvements.unshift({id:window.DB.nextId++,prodId:p.id,prod:p.name,date,type,delta,note});
+  _syncAndSave();
+  closeModal('modalReassort'); renderProduits(); refreshDashboard();
+  // Si le pop-up du graphe est ouvert sur ce produit, on le rafraîchit
+  if(window._stockModalProdId===p.id && document.getElementById('modalStock').classList.contains('open')) showStockChart(p.id);
+  toast(type==='reassort'?'Stock réapprovisionné !':'Perte enregistrée','success');
 }
 
 // ============================================================

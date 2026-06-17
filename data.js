@@ -30,6 +30,7 @@ var DB = {
   depenses:     [],
   clients:      [],
   produits:     [],
+  mouvements:   [],   // historique des mouvements de stock (réassorts, pertes)
   nextId:       200,
   clientFilter: ''
 };
