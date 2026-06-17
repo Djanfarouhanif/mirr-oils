@@ -1921,23 +1921,31 @@ function getStoredPwd(){
   try{ return localStorage.getItem(PWD_KEY)||'1234'; }catch(e){ return '1234'; }
 }
 
+function _showApp(){ const s=document.getElementById('_appLockStyle'); if(s) s.remove(); }
+function _hideApp(){ if(!document.getElementById('_appLockStyle')){ const s=document.createElement('style'); s.id='_appLockStyle'; s.textContent='.app{display:none!important}'; document.head.appendChild(s);} }
+
 /** Tente de déverrouiller avec le mot de passe saisi. */
 function tryUnlock(){
   const inp=document.getElementById('lockPwd');
   const pwd=inp?inp.value:'';
   if(pwd===getStoredPwd()){
     try{ localStorage.setItem(AUTH_KEY,String(Date.now())); }catch(e){}
+    const lh=document.getElementById('_lockHide'); if(lh) lh.remove();
+    _showApp();                                        // révèle l'application
     const ls=document.getElementById('lockScreen'); if(ls) ls.style.display='none';
     const err=document.getElementById('lockError'); if(err) err.style.display='none';
     if(inp) inp.value='';
+    if(window.startApp) window.startApp();             // charge/initialise l'app (1re fois)
   } else {
     const err=document.getElementById('lockError'); if(err) err.style.display='block';
     if(inp){ inp.value=''; inp.focus(); }
   }
 }
-/** Reverrouille immédiatement (efface la session). */
+/** Reverrouille immédiatement (efface la session et masque l'application). */
 function lockNow(){
   try{ localStorage.removeItem(AUTH_KEY); }catch(e){}
+  const lh=document.getElementById('_lockHide'); if(lh) lh.remove();
+  _hideApp();                                          // masque l'application
   const ls=document.getElementById('lockScreen');
   if(ls){ ls.style.display='flex'; const i=document.getElementById('lockPwd'); if(i){ i.value=''; i.focus(); } }
 }

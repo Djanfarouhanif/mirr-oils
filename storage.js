@@ -234,7 +234,7 @@ function updateSaveIndicator(isoDate) {
 // INIT ASYNCHRONE — remplace l'init synchrone de data.js
 // Charge les données et lance l'application
 // ============================================================
-(async function initStorage() {
+async function initStorage() {
   try {
     const data = await storageLoad();
 
@@ -299,4 +299,18 @@ function updateSaveIndicator(isoDate) {
         <p style="font-size:12px;color:#999">${e.message}</p>
       </div>`;
   }
+}
+
+// L'app ne se charge/initialise QUE si l'utilisateur est authentifié (session < 1h).
+// Sinon on attend le déverrouillage : tryUnlock() appellera window.startApp().
+window.startApp = function () {
+  if (window._appStarted) return;
+  window._appStarted = true;
+  initStorage();
+};
+(function () {
+  try {
+    const a = localStorage.getItem('mirroils_auth');
+    if (a && (Date.now() - parseInt(a, 10)) < 3600000) window.startApp();
+  } catch (e) {}
 })();

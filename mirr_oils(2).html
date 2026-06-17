@@ -40,14 +40,15 @@
       document.head.appendChild(st);
     }
   } catch(e) {}
-  // Verrouillage : masque l'écran de login si une session est encore valide (< 1h)
+  // Verrouillage : session valide (<1h) => on masque le verrou ; sinon on masque
+  // toute l'application (pas seulement le verrou) pour empêcher tout contournement.
   try {
     var _auth = localStorage.getItem('mirroils_auth');
-    if (_auth && (Date.now() - parseInt(_auth, 10)) < 3600000) {
-      var lsty = document.createElement('style');
-      lsty.textContent = '#lockScreen{display:none!important}';
-      document.head.appendChild(lsty);
-    }
+    var _ok = _auth && (Date.now() - parseInt(_auth, 10)) < 3600000;
+    var lsty = document.createElement('style');
+    if (_ok) { lsty.id = '_lockHide';     lsty.textContent = '#lockScreen{display:none!important}'; }
+    else     { lsty.id = '_appLockStyle'; lsty.textContent = '.app{display:none!important}'; }
+    document.head.appendChild(lsty);
   } catch(e) {}
 })();
 </script>
