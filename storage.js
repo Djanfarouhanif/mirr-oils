@@ -4,6 +4,15 @@
 // ============================================================
 
 const STORAGE_KEY = 'mirroils_db';
+
+// Cache local de la base SANS le mot de passe (le mot de passe ne vit que dans data.json).
+function _cacheLocal(data) {
+  try {
+    const copy = { ...data };
+    delete copy.password;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(copy));
+  } catch (e) {}
+}
 const API_SAVE    = '/api/save';   // route serveur qui écrit data.json
 let _serverWarned = false;         // évite de spammer le toast hors-ligne
 
@@ -44,7 +53,7 @@ async function storageLoad() {
     if (res.ok) {
       const data = await res.json();
       data.meta = data.meta || {};
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));   // cache local
+      _cacheLocal(data);   // cache local (sans mot de passe)
       console.log('[Storage] Données chargées depuis data.json (serveur)');
       return data;
     }
@@ -77,7 +86,7 @@ async function storageFetchDefault() {
     const data = await res.json();
     data.meta = data.meta || {};
     data.meta.lastSaved = new Date().toISOString();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    _cacheLocal(data);
     console.log('[Storage] data.json chargé et enregistré dans localStorage');
     return data;
   } catch (e) {
@@ -95,7 +104,7 @@ function storageSave(data) {
   data.meta = data.meta || {};
   data.meta.lastSaved = new Date().toISOString();
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    _cacheLocal(data);
     updateSaveIndicator(data.meta.lastSaved);
     persistToServer(data);   // écrit aussi dans le fichier data.json
   } catch (e) {
@@ -196,7 +205,7 @@ function storageImportJSON() {
       }
       parsed.meta = parsed.meta || {};
       parsed.meta.lastSaved = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      _cacheLocal(parsed);
       await persistToServer(parsed);   // écrit le fichier importé dans data.json
       if (typeof toast === 'function') toast('Import réussi ! Rechargement...', 'success');
       setTimeout(() => location.reload(), 1200);
@@ -262,9 +271,8 @@ async function initStorage() {
     // Coordonnées entreprise (même logique de fusion défauts + data.json)
     window.ENTREPRISE = Object.assign({}, window.ENTREPRISE, data.entreprise || {});
 
-    // Mot de passe d'accès : data.json fait foi ; on met en cache dans localStorage
+    // Mot de passe d'accès : UNIQUEMENT depuis data.json (jamais en localStorage)
     window.APP_PWD = data.password || window.APP_PWD || '1234';
-    try { localStorage.setItem('mirroils_pwd', window.APP_PWD); } catch (e) {}
 
     // Catégories de dépenses
     if (data.categories && data.categories.length) {
@@ -303,6 +311,16 @@ async function initStorage() {
 
 // L'app ne se charge/initialise QUE si l'utilisateur est authentifié (session < 1h).
 // Sinon on attend le déverrouillage : tryUnlock() appellera window.startApp().
+// Lit le mot de passe d'accès directement depuis data.json (sans charger toute l'app).
+// Permet de vérifier le mot de passe AVANT d'initialiser l'application.
+window.fetchAccessPassword = async function () {
+  try {
+    const res = await fetch('data.json?t=' + Date.now());
+    if (res.ok) { const d = await res.json(); return d.password || '1234'; }
+  } catch (e) {}
+  return '1234';
+};
+
 window.startApp = function () {
   if (window._appStarted) return;
   window._appStarted = true;

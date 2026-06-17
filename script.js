@@ -1911,24 +1911,24 @@ function appInit() {
 // ============================================================
 // VERROUILLAGE — mot de passe d'accès (défaut 1234), session 1h en localStorage
 // ============================================================
-const AUTH_KEY='mirroils_auth';   // horodatage de la dernière connexion réussie
-const PWD_KEY ='mirroils_pwd';    // mot de passe d'accès (par défaut 1234)
+const AUTH_KEY='mirroils_auth';   // horodatage de la dernière connexion (session, OK en localStorage)
 const AUTH_TTL=3600000;           // durée de session : 1 heure (ms)
 
-// Source de vérité = APP_PWD (chargé depuis data.json) ; repli sur le cache localStorage puis 1234.
-function getStoredPwd(){
-  if(typeof APP_PWD!=='undefined' && APP_PWD) return APP_PWD;
-  try{ return localStorage.getItem(PWD_KEY)||'1234'; }catch(e){ return '1234'; }
-}
+// Mot de passe : UNIQUEMENT depuis data.json (APP_PWD) — jamais en localStorage.
+function getStoredPwd(){ return (typeof APP_PWD!=='undefined' && APP_PWD) ? APP_PWD : '1234'; }
 
 function _showApp(){ const s=document.getElementById('_appLockStyle'); if(s) s.remove(); }
 function _hideApp(){ if(!document.getElementById('_appLockStyle')){ const s=document.createElement('style'); s.id='_appLockStyle'; s.textContent='.app{display:none!important}'; document.head.appendChild(s);} }
 
-/** Tente de déverrouiller avec le mot de passe saisi. */
-function tryUnlock(){
+/** Tente de déverrouiller avec le mot de passe saisi (lu depuis data.json). */
+async function tryUnlock(){
   const inp=document.getElementById('lockPwd');
   const pwd=inp?inp.value:'';
-  if(pwd===getStoredPwd()){
+  // Si l'app est déjà chargée, APP_PWD vient de data.json ; sinon on lit data.json directement.
+  let real;
+  if(window._appStarted && typeof APP_PWD!=='undefined' && APP_PWD) real=APP_PWD;
+  else real = window.fetchAccessPassword ? await window.fetchAccessPassword() : '1234';
+  if(pwd===real){
     try{ localStorage.setItem(AUTH_KEY,String(Date.now())); }catch(e){}
     const lh=document.getElementById('_lockHide'); if(lh) lh.remove();
     _showApp();                                        // révèle l'application
@@ -1963,9 +1963,8 @@ function changePassword(){
   if(cur!==getStoredPwd()){ toast('Mot de passe actuel incorrect','error'); return; }
   if(!nw || nw.length<4){ toast('Nouveau mot de passe trop court (min. 4)','error'); return; }
   if(nw!==cf){ toast('La confirmation ne correspond pas','error'); return; }
-  APP_PWD=nw;                                  // source de vérité
-  try{ localStorage.setItem(PWD_KEY,nw); }catch(e){}   // cache
-  _syncAndSave();                              // persiste dans data.json
+  APP_PWD=nw;                                  // source de vérité (en mémoire)
+  _syncAndSave();                              // persiste dans data.json (jamais localStorage)
   ['pwdCurrent','pwdNew','pwdConfirm'].forEach(id=>{const e=document.getElementById(id); if(e)e.value='';});
   toast('Mot de passe modifié !','success');
 }
