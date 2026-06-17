@@ -34,9 +34,10 @@
 <!-- FAIT : page Objectifs → tables "Suivi semaine/mois" avec Obj. CA éditable par ligne. Surcharge stockée (objWeek/objMonth) ; vide ou = global => repli sur objectif global. Reports utilisent ces valeurs. -->
 
 
-Dans les options de paramètre ajouter le logo et le nom à afficher
+<!-- Dans les options de paramètre ajouter le logo et le nom à afficher -->
 
 Possibilité de faire des exports en excel
 export format json import format json
+
 Réinitialiser toutes les donner (mots de passe supper admin 7009)
 <!-- Gestion de stock -->
