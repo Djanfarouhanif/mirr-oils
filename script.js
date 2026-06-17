@@ -914,4 +914,8 @@ function appInit() {
   try { savedPage = localStorage.getItem(PAGE_KEY) || 'dashboard'; } catch(e) {}
   if (!document.getElementById('page-' + savedPage)) savedPage = 'dashboard';
   navigate(savedPage);
+
+  // Retire le style de boot temporaire (navigate a pose les vraies classes .active)
+  const bootStyle = document.getElementById('_bootPage');
+  if (bootStyle) bootStyle.remove();
 }

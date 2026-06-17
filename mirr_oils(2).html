@@ -11,7 +11,7 @@
 </head>
 <body data-theme="dark">
 <script>
-// Restaure le theme + la couleur AVANT le rendu (evite le flash du theme par defaut)
+// Restaure le theme + la couleur + la page active AVANT le rendu (evite le flash du theme/dashboard par defaut)
 (function(){
   try {
     var t = localStorage.getItem('mirroils_theme');
@@ -23,6 +23,21 @@
       r.setProperty('--primary', col.c);
       r.setProperty('--primary-dark', col.cd || col.c);
       r.setProperty('--primary-bg', 'rgba('+parseInt(col.c.slice(1,3),16)+','+parseInt(col.c.slice(3,5),16)+','+parseInt(col.c.slice(5,7),16)+',.09)');
+    }
+    // Page active : injecte un style temporaire pour afficher la bonne page sans flash dashboard
+    var PAGES = ['dashboard','stats','ventes','depenses','clients','produits','rapports','objectifs','parametres'];
+    var page = localStorage.getItem('mirroils_page');
+    if (page && page !== 'dashboard' && PAGES.indexOf(page) !== -1) {
+      var st = document.createElement('style');
+      st.id = '_bootPage';
+      st.textContent =
+        '.page{display:none!important}' +
+        '#page-' + page + '{display:block!important}' +
+        '.nav-item.active{background:transparent!important;color:var(--text2)!important;font-weight:400!important}' +
+        '.nav-item.active::before{display:none!important}' +
+        '.nav-item[data-page="' + page + '"]{background:var(--primary-bg)!important;color:var(--primary)!important;font-weight:500!important}' +
+        '.nav-item[data-page="' + page + '"]::before{content:""!important;display:block!important;position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--primary);border-radius:0 3px 3px 0}';
+      document.head.appendChild(st);
     }
   } catch(e) {}
 })();
