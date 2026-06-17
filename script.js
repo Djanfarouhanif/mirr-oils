@@ -57,8 +57,11 @@ function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('collapsed',!sidebarOpen);
   document.getElementById('sidebarIcon').className = sidebarOpen?'ti ti-layout-sidebar-left-collapse':'ti ti-layout-sidebar-right-collapse';
 }
+const THEME_KEY = 'mirroils_theme';   // clé localStorage pour le theme
+const COLOR_KEY = 'mirroils_color';   // clé localStorage pour la couleur
 function toggleTheme() { setTheme(document.body.dataset.theme==='dark'?'light':'dark'); }
 function setTheme(t) {
+  try { localStorage.setItem(THEME_KEY, t); } catch(e) {}   // memorise le theme
   document.body.dataset.theme=t;
   document.getElementById('themeSwitch').classList.toggle('on',t==='dark');
   const dk=document.getElementById('themeCardDark'), lk=document.getElementById('themeCardLight');
@@ -70,6 +73,7 @@ function setTheme(t) {
 }
 function setColor(el) {
   const c=el.dataset.c, cd=el.dataset.cd;
+  try { localStorage.setItem(COLOR_KEY, JSON.stringify({c,cd})); } catch(e) {}   // memorise la couleur
   document.documentElement.style.setProperty('--primary',c);
   document.documentElement.style.setProperty('--primary-dark',cd||c);
   document.documentElement.style.setProperty('--primary-bg',hexRgba(c,.09));
@@ -81,8 +85,10 @@ function setColor(el) {
 }
 function applyCustomColor() {
   const c=document.getElementById('customColor').value;
+  try { localStorage.setItem(COLOR_KEY, JSON.stringify({c,cd:c})); } catch(e) {}   // memorise la couleur
   document.getElementById('customColorHex').value=c;
   document.documentElement.style.setProperty('--primary',c);
+  document.documentElement.style.setProperty('--primary-dark',c);
   document.documentElement.style.setProperty('--primary-bg',hexRgba(c,.09));
   toast('Couleur appliquee','success');
 }
@@ -874,6 +880,23 @@ function renderCatList() {
 // INIT PRINCIPALE — appelée par storage.js après chargement
 // ============================================================
 function appInit() {
+  // Restaure l'apparence memorisee (theme + couleur)
+  try {
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    if (savedTheme) setTheme(savedTheme);
+    const rawColor = localStorage.getItem(COLOR_KEY);
+    if (rawColor) {
+      const {c,cd} = JSON.parse(rawColor);
+      document.documentElement.style.setProperty('--primary',c);
+      document.documentElement.style.setProperty('--primary-dark',cd||c);
+      document.documentElement.style.setProperty('--primary-bg',hexRgba(c,.09));
+      const hex=document.getElementById('customColorHex'), inp=document.getElementById('customColor');
+      if(hex) hex.value=c;
+      if(inp) inp.value=c;
+      document.querySelectorAll('.color-swatch').forEach(s=>s.classList.toggle('selected', s.dataset.c===c));
+    }
+  } catch(e) {}
+
   fillProductOptions();
   fillClientDropdown();
   populateDepCat();
