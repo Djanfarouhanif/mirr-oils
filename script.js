@@ -122,6 +122,7 @@ function openModal(id) {
     ['pName','pCond','pPM','pPG','pUnit','pAlerte'].forEach(x=>document.getElementById(x).value='');
     document.getElementById('pPC').value='';
     document.getElementById('pStock').value='0';
+    clearProductPhoto();
   }
 }
 function closeModal(id) {
@@ -213,9 +214,12 @@ function renderProductBanner() {
   b.innerHTML=window.DB.produits.filter(p=>p.name!=='Reglement client').map(p=>{
     const sc=p.stock===0?'dot-red':p.stock<=p.alerte?'dot-orange':'dot-green';
     const price=p[priceKey]||0;
+    const icon=p.photo
+      ? `<img src="${p.photo}" alt="" class="pc-icon" style="width:40px;height:40px;border-radius:8px;object-fit:cover">`
+      : `<span class="pc-icon">&#128722;</span>`;
     return`<div class="product-card" style="cursor:pointer" onclick="showStockChart(${p.id})" title="Évolution du stock">
       <div class="pc-stock dot ${sc}"></div>
-      <span class="pc-icon">&#128722;</span>
+      ${icon}
       <div class="pc-name">${p.name}</div>
       <div class="pc-price">${fcfa(price)}</div>
       <div class="pc-cond">${p.cond}</div>
@@ -648,6 +652,48 @@ function updateClientCounts() {
 // PRODUITS — CRUD avec persistance JSON
 // ============================================================
 
+// Image du produit en cours de saisie (data URL réduite)
+let productPhotoData='';
+
+/** Lit l'image choisie, la redimensionne (max 256px) et met à jour l'aperçu. */
+function onProductPhotoSelected(e) {
+  const file=e.target.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Fichier image invalide','error');return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=256; let w=img.width, h=img.height;
+      if(w>h && w>max){h=Math.round(h*max/w); w=max;}
+      else if(h>max){w=Math.round(w*max/h); h=max;}
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      productPhotoData=canvas.toDataURL('image/jpeg',0.85);   // léger, compatible localStorage/JSON
+      updateProductPhotoPreview();
+    };
+    img.onerror=()=>toast('Image illisible','error');
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+/** Met à jour l'aperçu image (image vs placeholder). */
+function updateProductPhotoPreview() {
+  const img=document.getElementById('pPhotoPreview');
+  const ph=document.getElementById('pPhotoPlaceholder');
+  const rm=document.getElementById('pPhotoRemove');
+  if(!img)return;
+  if(productPhotoData){img.src=productPhotoData;img.style.display='block';ph.style.display='none';rm.style.display='inline-flex';}
+  else{img.src='';img.style.display='none';ph.style.display='flex';rm.style.display='none';}
+}
+/** Retire l'image en cours de saisie. */
+function clearProductPhoto() {
+  productPhotoData='';
+  const input=document.getElementById('pPhotoInput'); if(input) input.value='';
+  updateProductPhotoPreview();
+}
+
 /** SAVE PRODUIT — CREATE ou UPDATE + persistance JSON */
 function saveProduit() {
   const name=document.getElementById('pName').value;
@@ -661,7 +707,8 @@ function saveProduit() {
     pg:parseFloat(document.getElementById('pPG').value)||0,
     unit:document.getElementById('pUnit').value,
     stock:parseInt(document.getElementById('pStock').value)||0,
-    alerte:parseInt(document.getElementById('pAlerte').value)||0
+    alerte:parseInt(document.getElementById('pAlerte').value)||0,
+    photo:productPhotoData||''
   };
 
   if(editingProdId) {
@@ -706,6 +753,8 @@ function editProduit(id) {
   document.getElementById('pUnit').value=p.unit||'';
   document.getElementById('pStock').value=p.stock||0;
   document.getElementById('pAlerte').value=p.alerte||0;
+  productPhotoData=p.photo||'';
+  updateProductPhotoPreview();
   openModal('modalProduit');
 }
 
@@ -720,7 +769,10 @@ function deleteProduit(id) {
 function renderProduits() {
   document.getElementById('prodBody').innerHTML=window.DB.produits.map(p=>{
     const sb=p.stock===0?`<span class="dot dot-red" style="margin-right:4px"></span>Rupture`:p.stock<=p.alerte?`<span class="dot dot-orange" style="margin-right:4px"></span>Faible (${p.stock})`:`<span class="dot dot-green" style="margin-right:4px"></span>En stock (${p.stock})`;
-    return`<tr><td><strong style="cursor:pointer;color:var(--primary)" onclick="showStockChart(${p.id})" title="Voir l'évolution du stock">${p.name}</strong></td><td>${p.cond||'--'}</td><td class="text-right num">${fmt(p.pc)}</td><td class="text-right num">${fmt(p.pm)}</td><td class="text-right num">${fmt(p.pg)}</td><td style="font-size:12px">${sb}</td><td class="text-center" style="white-space:nowrap"><button class="btn btn-xs" onclick="editProduit(${p.id})" title="Modifier le produit"><i class="ti ti-edit"></i></button><button class="btn btn-xs" onclick="showStockChart(${p.id})" title="Évolution du stock"><i class="ti ti-chart-line"></i></button><button class="btn btn-xs" onclick="openReassort(${p.id})" title="Réapprovisionner / ajuster le stock"><i class="ti ti-package"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteProduit(${p.id})"><i class="ti ti-trash"></i></button></td></tr>`;
+    const av=p.photo
+      ? `<img src="${p.photo}" alt="" style="width:34px;height:34px;border-radius:8px;object-fit:cover">`
+      : `<span style="width:34px;height:34px;border-radius:8px;background:var(--bg3);display:inline-flex;align-items:center;justify-content:center;color:var(--text3)"><i class="ti ti-droplet"></i></span>`;
+    return`<tr><td><span style="display:inline-flex;align-items:center;gap:8px">${av}<strong style="cursor:pointer;color:var(--primary)" onclick="showStockChart(${p.id})" title="Voir l'évolution du stock">${p.name}</strong></span></td><td>${p.cond||'--'}</td><td class="text-right num">${fmt(p.pc)}</td><td class="text-right num">${fmt(p.pm)}</td><td class="text-right num">${fmt(p.pg)}</td><td style="font-size:12px">${sb}</td><td class="text-center" style="white-space:nowrap"><button class="btn btn-xs" onclick="editProduit(${p.id})" title="Modifier le produit"><i class="ti ti-edit"></i></button><button class="btn btn-xs" onclick="showStockChart(${p.id})" title="Évolution du stock"><i class="ti ti-chart-line"></i></button><button class="btn btn-xs" onclick="openReassort(${p.id})" title="Réapprovisionner / ajuster le stock"><i class="ti ti-package"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteProduit(${p.id})"><i class="ti ti-trash"></i></button></td></tr>`;
   }).join('');
 }
 

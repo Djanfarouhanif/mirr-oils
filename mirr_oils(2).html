@@ -442,6 +442,16 @@
   <div class="modal">
     <div class="modal-header"><span class="modal-title"><i class="ti ti-droplet" style="margin-right:8px;color:var(--primary)"></i><span id="prodModalTitle">Nouveau produit</span></span><button class="modal-close" onclick="closeModal('modalProduit')">x</button></div>
     <div class="modal-body">
+      <div class="form-group">
+        <label class="lbl">Image du produit</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <img id="pPhotoPreview" src="" alt="" style="width:56px;height:56px;border-radius:10px;object-fit:cover;border:1px solid var(--border);display:none">
+          <div id="pPhotoPlaceholder" style="width:56px;height:56px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3)"><i class="ti ti-droplet" style="font-size:24px"></i></div>
+          <input type="file" id="pPhotoInput" accept="image/*" style="display:none" onchange="onProductPhotoSelected(event)">
+          <button type="button" class="btn btn-sm" onclick="document.getElementById('pPhotoInput').click()"><i class="ti ti-upload"></i> Choisir une image</button>
+          <button type="button" class="btn btn-sm" id="pPhotoRemove" onclick="clearProductPhoto()" style="display:none"><i class="ti ti-x"></i> Retirer</button>
+        </div>
+      </div>
       <div class="form-row cols-2"><div class="form-group"><label class="lbl">Nom <span class="req">*</span></label><input type="text" id="pName" placeholder="ex: XDEO SAE 50"></div><div class="form-group"><label class="lbl">Conditionnement</label><input type="text" id="pCond" placeholder="ex: Fut 200L"></div></div>
       <div class="form-row cols-3"><div class="form-group"><label class="lbl">Prix client (XOF) <span class="req">*</span></label><input type="number" id="pPC" placeholder="0"></div><div class="form-group"><label class="lbl">Prix mecanicien (XOF)</label><input type="number" id="pPM" placeholder="0"></div><div class="form-group"><label class="lbl">Prix grossiste (XOF)</label><input type="number" id="pPG" placeholder="0"></div></div>
       <div class="form-row cols-2"><div class="form-group"><label class="lbl">Unite de vente</label><input type="text" id="pUnit" placeholder="bouteille, carton, litre..."></div><div class="form-group"><label class="lbl">Stock initial</label><input type="number" id="pStock" value="0"></div></div>
