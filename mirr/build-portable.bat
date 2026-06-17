@@ -40,6 +40,8 @@ copy /y "%~dp0logo.png"        "%OUT%\" >nul 2>nul
 copy /y "%~dp0simple-logo.png" "%OUT%\" >nul 2>nul
 copy /y "%~dp0Lancer.bat"      "%OUT%\" >nul
 copy /y "%~dp0LISEZ-MOI.txt"   "%OUT%\" >nul
+copy /y "%~dp0icon.ico"        "%OUT%\" >nul 2>nul
+copy /y "%~dp0Creer-un-raccourci-bureau.bat" "%OUT%\" >nul
 
 echo.
 echo ============================================
