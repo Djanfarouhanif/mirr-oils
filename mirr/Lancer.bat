@@ -12,6 +12,22 @@ rem ============================================================
 set "NODE_EXE=%~dp0node\node.exe"
 if not exist "%NODE_EXE%" set "NODE_EXE=node"
 
+rem --- Premier lancement : cree le raccourci sur le Bureau (une seule fois) ---
+if not exist "%~dp0.raccourci-cree" (
+  echo Premier lancement : creation du raccourci "Mirr Oils" sur le Bureau...
+  powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$ws = New-Object -ComObject WScript.Shell;" ^
+    "$lnk = $ws.CreateShortcut([System.IO.Path]::Combine($ws.SpecialFolders('Desktop'),'Mirr Oils.lnk'));" ^
+    "$lnk.TargetPath = '%~dp0Lancer.bat';" ^
+    "$lnk.WorkingDirectory = '%~dp0';" ^
+    "if (Test-Path '%~dp0icon.ico') { $lnk.IconLocation = '%~dp0icon.ico' };" ^
+    "$lnk.Description = 'Lancer l''application Mirr Oils';" ^
+    "$lnk.Save()"
+  echo terminé > "%~dp0.raccourci-cree"
+  echo Raccourci cree. La prochaine fois, lancez l'app depuis l'icone du Bureau.
+  echo.
+)
+
 echo ============================================
 echo   Mirr Oils demarre...
 echo.

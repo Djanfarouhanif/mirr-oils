@@ -3,20 +3,21 @@
    Mode d'emploi (aucune installation necessaire)
 ============================================================
 
-RACCOURCI SUR LE BUREAU (recommande, a faire 1 seule fois)
-----------------------------------------------------------
-1. Double-cliquez sur  ->  Creer-un-raccourci-bureau.bat
-2. Une icone "Mirr Oils" apparait sur votre Bureau.
-3. Desormais, lancez l'application en double-cliquant sur
-   cette icone (plus besoin d'ouvrir le dossier).
-
 POUR DEMARRER L'APPLICATION
 ---------------------------
-1. Double-cliquez sur l'icone "Mirr Oils" du Bureau
-   (ou, dans le dossier, sur  ->  Lancer.bat).
+1. La toute premiere fois : ouvrez le dossier "MirrOils-Portable"
+   et double-cliquez sur  ->  Lancer.bat
+   Une icone "Mirr Oils" est creee AUTOMATIQUEMENT sur le Bureau.
 2. Une fenetre noire s'ouvre : c'est normal, NE LA FERMEZ PAS.
 3. Votre navigateur (Chrome, Edge...) s'ouvre tout seul sur
    l'application. Vous pouvez commencer a travailler.
+
+LES FOIS SUIVANTES
+------------------
+- Double-cliquez simplement sur l'icone "Mirr Oils" du Bureau.
+
+(Si l'icone du Bureau a ete supprimee par erreur, double-cliquez
+ sur "Creer-un-raccourci-bureau.bat" pour la recreer.)
 
 POUR ARRETER
 ------------
