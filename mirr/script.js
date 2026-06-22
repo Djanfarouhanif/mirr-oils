@@ -17,10 +17,10 @@ const catBadge = c => {
   if(t && (t.bg||t.border||t.color)){
     return `<span class="badge" style="background:${t.bg||'transparent'};border:1px solid ${t.border||'transparent'};color:${t.color||'inherit'}">${ptL(c)}</span>`;
   }
-  const m={client:'b-client',mecanicien:'b-meca',grossiste:'b-grossiste',coursier:'b-coursier'};
+  const m={client:'b-client',mecanicien:'b-meca',grossiste:'b-grossiste',coursier:'b-coursier',mecano:'b-meca',distributeur:'b-grossiste',consommateur:'b-client',semi:'b-default'};
   return `<span class="badge ${m[c]||'b-default'}">${ptL(c)}</span>`;
 };
-const getP = (prod,type) => { if(!prod)return 0; return {client:prod.pc,mecanicien:prod.pm,grossiste:prod.pg}[type]||prod.pc||0; };
+const getP = (prod,type) => { if(!prod)return 0; return {mecano:prod.pMecano,semi:prod.pSemi,distributeur:prod.pDistrib,consommateur:prod.pConso}[type]||prod.pConso||0; };
 const hexRgba = (h,a) => { const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return `rgba(${r},${g},${b},${a})`; };
 
 // Helper : synchronise DB.nextId vers _storageData puis sauvegarde
@@ -133,7 +133,7 @@ function openModal(id) {
     ['vProd','vQty','vUnitPrice','vClientName','vNote'].forEach(x=>document.getElementById(x).value='');
     document.getElementById('vRemise').value='0';
     document.getElementById('vAmount').value='';
-    document.getElementById('vPriceType').value='client';
+    document.getElementById('vPriceType').value='consommateur';
     ['vTotalHint','vUnitHint','vPriceHint','vRemiseHint'].forEach(x=>document.getElementById(x).textContent='');
     const vc=document.getElementById('vCompte'); if(vc) vc.value=defaultCompteId();
     const vs=document.getElementById('vStatut'); if(vs) vs.value='paye';
@@ -147,8 +147,7 @@ function openModal(id) {
   if(id==='modalProduit' && !editingProdId) {
     // Création : titre + champs vierges (sinon les valeurs d'une édition précédente persistent)
     const t=document.getElementById('prodModalTitle'); if(t) t.textContent='Nouveau produit';
-    ['pName','pCond','pPM','pPG','pUnit','pAlerte'].forEach(x=>document.getElementById(x).value='');
-    document.getElementById('pPC').value='';
+    ['pName','pCond','pMecano','pSemi','pDistrib','pConso','pUnit','pAlerte'].forEach(x=>document.getElementById(x).value='');
     document.getElementById('pStock').value='0';
     clearProductPhoto();
   }
@@ -189,7 +188,7 @@ function getCurrentWeekRange() {
   const toISO=d=>d.toISOString().slice(0,10);
   return{from:toISO(mon),to:toISO(fri),mon,fri};
 }
-let dashPriceType='client';
+let dashPriceType='consommateur';
 function setDashPriceType(type,el) {
   dashPriceType=type;
   document.querySelectorAll('[id^="dpill-"]').forEach(x=>x.classList.remove('active'));
@@ -240,7 +239,7 @@ function refreshDashboard() {
 function renderProductBanner() {
   const b=document.getElementById('productBanner');
   if(!b) return;
-  const pt=dashPriceType||'client';
+  const pt=dashPriceType||'consommateur';
   const priceKey={client:'pc',mecanicien:'pm',grossiste:'pg'}[pt]||'pc';
   b.innerHTML=window.DB.produits.filter(p=>p.name!=='Reglement client').map(p=>{
     const sc=p.stock===0?'dot-red':p.stock<=p.alerte?'dot-orange':'dot-green';
@@ -389,7 +388,7 @@ function fillPrice() {
     const price=getP(prod,pt);
     document.getElementById('vUnitPrice').value=price||'';
     document.getElementById('vUnitHint').textContent=(prod.cond?'Unite: '+prod.cond+' — ':'')+'Stock dispo: '+(prod.stock||0);
-    document.getElementById('vPriceHint').textContent=`C:${fmt(prod.pc)} | M:${fmt(prod.pm)} | G:${fmt(prod.pg)}`;
+    document.getElementById('vPriceHint').textContent=`Méc:${fmt(prod.pMecano)} | S-D:${fmt(prod.pSemi)} | Dist:${fmt(prod.pDistrib)} | Conso:${fmt(prod.pConso)}`;
   } else {
     document.getElementById('vUnitHint').textContent='';
     document.getElementById('vPriceHint').textContent='';
@@ -760,7 +759,7 @@ function ensureDefaultTypes() {
     window.DB.clientTypes=[{key:'client',label:'Client'},{key:'mecanicien',label:'Mecanicien'},{key:'grossiste',label:'Grossiste'},{key:'coursier',label:'Coursier'}];
   }
   if(!window.DB.priceTypes || !window.DB.priceTypes.length){
-    window.DB.priceTypes=[{key:'client',label:'Prix client'},{key:'mecanicien',label:'Prix mecanicien'},{key:'grossiste',label:'Prix grossiste'}];
+    window.DB.priceTypes=[{key:'mecano',label:'Prix mécano'},{key:'semi',label:'Prix semi-distributeur'},{key:'distributeur',label:'Prix distributeur'},{key:'consommateur',label:'Prix consommateur'}];
   }
 }
 /** Transforme un libellé en clé technique (minuscules, sans accents/espaces). */
@@ -891,14 +890,15 @@ function clearProductPhoto() {
 /** SAVE PRODUIT — CREATE ou UPDATE + persistance JSON */
 function saveProduit() {
   const name=document.getElementById('pName').value;
-  const pc=parseFloat(document.getElementById('pPC').value)||0;
-  if(!name||!pc){toast('Nom et prix client obligatoires','error');return;}
+  const pConso=parseFloat(document.getElementById('pConso').value)||0;
+  if(!name||!pConso){toast('Nom et prix consommateur obligatoires','error');return;}
   const fields={
     name,
     cond:document.getElementById('pCond').value,
-    pc,
-    pm:parseFloat(document.getElementById('pPM').value)||0,
-    pg:parseFloat(document.getElementById('pPG').value)||0,
+    pMecano:parseFloat(document.getElementById('pMecano').value)||0,
+    pSemi:parseFloat(document.getElementById('pSemi').value)||0,
+    pDistrib:parseFloat(document.getElementById('pDistrib').value)||0,
+    pConso,
     unit:document.getElementById('pUnit').value,
     stock:parseInt(document.getElementById('pStock').value)||0,
     alerte:parseInt(document.getElementById('pAlerte').value)||0,
@@ -942,9 +942,10 @@ function editProduit(id) {
   const t=document.getElementById('prodModalTitle'); if(t) t.textContent='Modifier le produit';
   document.getElementById('pName').value=p.name||'';
   document.getElementById('pCond').value=p.cond||'';
-  document.getElementById('pPC').value=p.pc||'';
-  document.getElementById('pPM').value=p.pm||'';
-  document.getElementById('pPG').value=p.pg||'';
+  document.getElementById('pMecano').value=p.pMecano||'';
+  document.getElementById('pSemi').value=p.pSemi||'';
+  document.getElementById('pDistrib').value=p.pDistrib||'';
+  document.getElementById('pConso').value=p.pConso||'';
   document.getElementById('pUnit').value=p.unit||'';
   document.getElementById('pStock').value=p.stock||0;
   document.getElementById('pAlerte').value=p.alerte||0;
@@ -968,7 +969,7 @@ function renderProduits() {
     const av=p.photo
       ? `<img src="${p.photo}" alt="" style="width:34px;height:34px;border-radius:8px;object-fit:cover">`
       : `<span style="width:34px;height:34px;border-radius:8px;background:var(--bg3);display:inline-flex;align-items:center;justify-content:center;color:var(--text3)"><i class="ti ti-droplet"></i></span>`;
-    return`<tr><td><span style="display:inline-flex;align-items:center;gap:8px">${av}<strong style="cursor:pointer;color:var(--primary)" onclick="showStockChart(${p.id})" title="Voir l'évolution du stock">${p.name}</strong></span></td><td>${p.cond||'--'}</td><td class="text-right num">${fmt(p.pc)}</td><td class="text-right num">${fmt(p.pm)}</td><td class="text-right num">${fmt(p.pg)}</td><td style="font-size:12px">${sb}</td><td class="text-center" style="white-space:nowrap"><button class="btn btn-xs" onclick="editProduit(${p.id})" title="Modifier le produit"><i class="ti ti-edit"></i></button><button class="btn btn-xs" onclick="showStockChart(${p.id})" title="Évolution du stock"><i class="ti ti-chart-line"></i></button><button class="btn btn-xs" onclick="openReassort(${p.id})" title="Réapprovisionner / ajuster le stock"><i class="ti ti-package"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteProduit(${p.id})"><i class="ti ti-trash"></i></button></td></tr>`;
+    return`<tr><td><span style="display:inline-flex;align-items:center;gap:8px">${av}<strong style="cursor:pointer;color:var(--primary)" onclick="showStockChart(${p.id})" title="Voir l'évolution du stock">${p.name}</strong></span></td><td>${p.cond||'--'}</td><td class="text-right num">${fmt(p.pMecano)}</td><td class="text-right num">${fmt(p.pSemi)}</td><td class="text-right num">${fmt(p.pDistrib)}</td><td class="text-right num">${fmt(p.pConso)}</td><td style="font-size:12px">${sb}</td><td class="text-center" style="white-space:nowrap"><button class="btn btn-xs" onclick="editProduit(${p.id})" title="Modifier le produit"><i class="ti ti-edit"></i></button><button class="btn btn-xs" onclick="showStockChart(${p.id})" title="Évolution du stock"><i class="ti ti-chart-line"></i></button><button class="btn btn-xs" onclick="openReassort(${p.id})" title="Réapprovisionner / ajuster le stock"><i class="ti ti-package"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteProduit(${p.id})"><i class="ti ti-trash"></i></button></td></tr>`;
   }).join('');
 }
 
