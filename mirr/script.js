@@ -825,7 +825,8 @@ function renderProductPriceFields(prices) {
   wrap.innerHTML=(window.DB.priceTypes||[]).map(t=>{
     const v=(prices[t.key]!=null && prices[t.key]!=='')?prices[t.key]:'';
     const req=t.key==='consommateur'?' <span class="req">*</span>':'';
-    return `<div class="form-group"><label class="lbl">${t.label} (XOF)${req}</label>
+    return `<div class="form-group" style="margin-bottom:0">
+      <label class="lbl" style="min-height:30px;line-height:1.25;display:flex;align-items:flex-end" title="${t.label}">${t.label} (XOF)${req}</label>
       <input type="number" class="prodPriceInput" data-pkey="${t.key}" value="${v}" placeholder="0"></div>`;
   }).join('');
 }
