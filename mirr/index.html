@@ -128,12 +128,7 @@
       <div class="card-title"><i class="ti ti-droplet"></i> Catalogue produits</div>
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:12px;color:var(--text2)">Afficher prix :</span>
-        <div class="period-pills" style="gap:6px">
-          <div class="period-pill" id="dpill-mecano" onclick="setDashPriceType('mecano',this)">Mécano</div>
-          <div class="period-pill" id="dpill-semi" onclick="setDashPriceType('semi',this)">Semi-distrib.</div>
-          <div class="period-pill" id="dpill-distributeur" onclick="setDashPriceType('distributeur',this)">Distributeur</div>
-          <div class="period-pill active" id="dpill-consommateur" onclick="setDashPriceType('consommateur',this)">Consommateur</div>
-        </div>
+        <div class="period-pills" style="gap:6px" id="dashPriceTypePills"></div>
         <button class="btn btn-ghost btn-sm" onclick="navigate('produits')">Gérer <i class="ti ti-arrow-right"></i></button>
       </div>
     </div>
@@ -255,8 +250,13 @@
 <!-- PAGE: PRODUITS -->
 <div class="page" id="page-produits">
   <div class="card">
-    <div class="card-header"><div class="card-title"><i class="ti ti-droplet"></i> Catalogue produits</div><button class="btn btn-primary" onclick="openModal('modalProduit')"><i class="ti ti-plus"></i> Nouveau produit</button></div>
-    <div class="tbl-wrap"><table><thead><tr><th>Produit</th><th>Conditionnement</th><th class="text-right">Mécano</th><th class="text-right">Semi-distrib.</th><th class="text-right">Distributeur</th><th class="text-right">Consommateur</th><th>Stock</th><th class="text-center">Actions</th></tr></thead><tbody id="prodBody"></tbody></table></div>
+    <div class="card-header"><div class="card-title"><i class="ti ti-droplet"></i> Catalogue produits</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="openTypesModal()"><i class="ti ti-coin"></i> Gérer les types de prix</button>
+        <button class="btn btn-primary" onclick="openModal('modalProduit')"><i class="ti ti-plus"></i> Nouveau produit</button>
+      </div>
+    </div>
+    <div class="tbl-wrap"><table><thead id="prodHead"></thead><tbody id="prodBody"></tbody></table></div>
   </div>
 </div>
 <!-- PAGE: TRESORERIE -->
@@ -582,7 +582,7 @@
         </div>
       </div>
       <div class="form-row cols-2"><div class="form-group"><label class="lbl">Nom <span class="req">*</span></label><input type="text" id="pName" placeholder="ex: XDEO SAE 50"></div><div class="form-group"><label class="lbl">Conditionnement</label><input type="text" id="pCond" placeholder="ex: Fut 200L"></div></div>
-      <div class="form-row cols-4"><div class="form-group"><label class="lbl">Prix mécano (XOF)</label><input type="number" id="pMecano" placeholder="0"></div><div class="form-group"><label class="lbl">Prix semi-distrib. (XOF)</label><input type="number" id="pSemi" placeholder="0"></div><div class="form-group"><label class="lbl">Prix distributeur (XOF)</label><input type="number" id="pDistrib" placeholder="0"></div><div class="form-group"><label class="lbl">Prix consommateur (XOF) <span class="req">*</span></label><input type="number" id="pConso" placeholder="0"></div></div>
+      <div class="form-group"><label class="lbl">Prix par type</label><div class="form-row cols-4" id="prodPriceFields"></div></div>
       <div class="form-row cols-2"><div class="form-group"><label class="lbl">Unite de vente</label><input type="text" id="pUnit" placeholder="bouteille, carton, litre..."></div><div class="form-group"><label class="lbl">Stock initial</label><input type="number" id="pStock" value="0"></div></div>
       <div class="form-group"><label class="lbl">Seuil alerte stock</label><input type="number" id="pAlerte" placeholder="ex: 5"></div>
     </div>

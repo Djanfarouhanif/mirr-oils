@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "app": "Mirr Oils",
-    "lastSaved": "2026-06-22T09:27:28.665Z"
+    "lastSaved": "2026-06-22T10:05:39.226Z"
   },
   "objectifs": {
     "caM": 2000000,
@@ -31,7 +31,13 @@
       "pConso": 28000,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 24000,
+        "semi": 23000,
+        "distributeur": 22000,
+        "consommateur": 28000
+      }
     },
     {
       "id": 2,
@@ -43,7 +49,13 @@
       "pConso": 30000,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 25500,
+        "semi": 25000,
+        "distributeur": 24500,
+        "consommateur": 30000
+      }
     },
     {
       "id": 3,
@@ -55,7 +67,13 @@
       "pConso": 35000,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 29000,
+        "semi": 28000,
+        "distributeur": 27000,
+        "consommateur": 35000
+      }
     },
     {
       "id": 4,
@@ -67,7 +85,13 @@
       "pConso": 29000,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 25500,
+        "semi": 25000,
+        "distributeur": 24500,
+        "consommateur": 29000
+      }
     },
     {
       "id": 5,
@@ -79,7 +103,13 @@
       "pConso": 24200,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 22000,
+        "semi": 21000,
+        "distributeur": 20000,
+        "consommateur": 24200
+      }
     },
     {
       "id": 6,
@@ -91,7 +121,13 @@
       "pConso": 19360,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 17600,
+        "semi": 16800,
+        "distributeur": 16000,
+        "consommateur": 19360
+      }
     },
     {
       "id": 7,
@@ -103,7 +139,13 @@
       "pConso": 23200,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 21000,
+        "semi": 20000,
+        "distributeur": 19000,
+        "consommateur": 23200
+      }
     },
     {
       "id": 8,
@@ -115,7 +157,13 @@
       "pConso": 19500,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 18000,
+        "semi": 17250,
+        "distributeur": 16500,
+        "consommateur": 19500
+      }
     },
     {
       "id": 9,
@@ -127,7 +175,13 @@
       "pConso": 16500,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 14850,
+        "semi": 14025,
+        "distributeur": 13200,
+        "consommateur": 16500
+      }
     },
     {
       "id": 10,
@@ -139,7 +193,13 @@
       "pConso": 15000,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 14300,
+        "semi": 13600,
+        "distributeur": 13000,
+        "consommateur": 15000
+      }
     },
     {
       "id": 11,
@@ -151,7 +211,13 @@
       "pConso": 16000,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 14850,
+        "semi": 14025,
+        "distributeur": 13200,
+        "consommateur": 16000
+      }
     },
     {
       "id": 12,
@@ -163,7 +229,13 @@
       "pConso": 15800,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 14490,
+        "semi": 13685,
+        "distributeur": 12880,
+        "consommateur": 15800
+      }
     },
     {
       "id": 13,
@@ -175,7 +247,13 @@
       "pConso": 15950,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 14500,
+        "semi": 13500,
+        "distributeur": 12500,
+        "consommateur": 15950
+      }
     },
     {
       "id": 14,
@@ -187,7 +265,13 @@
       "pConso": 583000,
       "unit": "drum",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 530000,
+        "semi": 506000,
+        "distributeur": 475000,
+        "consommateur": 583000
+      }
     },
     {
       "id": 15,
@@ -199,7 +283,13 @@
       "pConso": 14200,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 13230,
+        "semi": 12495,
+        "distributeur": 11760,
+        "consommateur": 14200
+      }
     },
     {
       "id": 16,
@@ -211,7 +301,13 @@
       "pConso": 56100,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 51000,
+        "semi": 48500,
+        "distributeur": 47000,
+        "consommateur": 56100
+      }
     },
     {
       "id": 17,
@@ -223,7 +319,13 @@
       "pConso": 56100,
       "unit": "seau",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 51000,
+        "semi": 48500,
+        "distributeur": 47000,
+        "consommateur": 56100
+      }
     },
     {
       "id": 18,
@@ -235,7 +337,13 @@
       "pConso": 508200,
       "unit": "drum",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 462000,
+        "semi": 438000,
+        "distributeur": 415000,
+        "consommateur": 508200
+      }
     },
     {
       "id": 19,
@@ -247,7 +355,13 @@
       "pConso": 12750,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 12250,
+        "semi": 11750,
+        "distributeur": 10750,
+        "consommateur": 12750
+      }
     },
     {
       "id": 20,
@@ -259,7 +373,13 @@
       "pConso": 0,
       "unit": "drum",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 0,
+        "semi": 0,
+        "distributeur": 390000,
+        "consommateur": 0
+      }
     },
     {
       "id": 21,
@@ -271,7 +391,13 @@
       "pConso": 3200,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 2900,
+        "semi": 2700,
+        "distributeur": 2200,
+        "consommateur": 3200
+      }
     },
     {
       "id": 22,
@@ -283,7 +409,13 @@
       "pConso": 57200,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 52000,
+        "semi": 51000,
+        "distributeur": 50000,
+        "consommateur": 57200
+      }
     },
     {
       "id": 23,
@@ -295,7 +427,13 @@
       "pConso": 510400,
       "unit": "drum",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 464000,
+        "semi": 440000,
+        "distributeur": 417000,
+        "consommateur": 510400
+      }
     },
     {
       "id": 24,
@@ -307,7 +445,13 @@
       "pConso": 526550,
       "unit": "drum",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 478700,
+        "semi": 453500,
+        "distributeur": 428300,
+        "consommateur": 526550
+      }
     },
     {
       "id": 25,
@@ -319,7 +463,13 @@
       "pConso": 5300,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 4770,
+        "semi": 4505,
+        "distributeur": 4240,
+        "consommateur": 5300
+      }
     },
     {
       "id": 26,
@@ -331,7 +481,13 @@
       "pConso": 26400,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 24000,
+        "semi": 23000,
+        "distributeur": 22000,
+        "consommateur": 26400
+      }
     },
     {
       "id": 27,
@@ -343,7 +499,13 @@
       "pConso": 29150,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 26500,
+        "semi": 25500,
+        "distributeur": 24500,
+        "consommateur": 29150
+      }
     },
     {
       "id": 28,
@@ -355,7 +517,13 @@
       "pConso": 913000,
       "unit": "drum",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 830000,
+        "semi": 780000,
+        "distributeur": 770000,
+        "consommateur": 913000
+      }
     },
     {
       "id": 29,
@@ -367,7 +535,13 @@
       "pConso": 2500,
       "unit": "bouteille",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 2250,
+        "semi": 2125,
+        "distributeur": 2000,
+        "consommateur": 2500
+      }
     },
     {
       "id": 30,
@@ -379,7 +553,13 @@
       "pConso": 3200,
       "unit": "bouteille",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 2880,
+        "semi": 2720,
+        "distributeur": 2560,
+        "consommateur": 3200
+      }
     },
     {
       "id": 31,
@@ -391,7 +571,13 @@
       "pConso": 5300,
       "unit": "boite",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 5000,
+        "semi": 4800,
+        "distributeur": 4500,
+        "consommateur": 5300
+      }
     },
     {
       "id": 32,
@@ -403,7 +589,13 @@
       "pConso": 79500,
       "unit": "seau",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 75000,
+        "semi": 72000,
+        "distributeur": 67500,
+        "consommateur": 79500
+      }
     },
     {
       "id": 33,
@@ -415,7 +607,13 @@
       "pConso": 4500,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 4250,
+        "semi": 4000,
+        "distributeur": 3900,
+        "consommateur": 4500
+      }
     },
     {
       "id": 34,
@@ -427,7 +625,13 @@
       "pConso": 90000,
       "unit": "seau",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 85000,
+        "semi": 80000,
+        "distributeur": 78000,
+        "consommateur": 90000
+      }
     },
     {
       "id": 35,
@@ -439,7 +643,13 @@
       "pConso": 6000,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 5000,
+        "semi": 0,
+        "distributeur": 4200,
+        "consommateur": 6000
+      }
     },
     {
       "id": 36,
@@ -451,7 +661,13 @@
       "pConso": 3200,
       "unit": "bidon",
       "stock": 0,
-      "alerte": 3
+      "alerte": 3,
+      "prices": {
+        "mecano": 3150,
+        "semi": 2975,
+        "distributeur": 2800,
+        "consommateur": 3200
+      }
     }
   ],
   "nextId": 104,
