@@ -20,7 +20,25 @@ const catBadge = c => {
   const m={client:'b-client',mecanicien:'b-meca',grossiste:'b-grossiste',coursier:'b-coursier',mecano:'b-meca',distributeur:'b-grossiste',consommateur:'b-client',semi:'b-default'};
   return `<span class="badge ${m[c]||'b-default'}">${ptL(c)}</span>`;
 };
-const getP = (prod,type) => { if(!prod)return 0; return {mecano:prod.pMecano,semi:prod.pSemi,distributeur:prod.pDistrib,consommateur:prod.pConso}[type]||prod.pConso||0; };
+/** Retourne la map des prix d'un produit { cleType: montant }.
+ *  Migre à la volée les anciens champs fixes (pMecano/pSemi/pDistrib/pConso) si .prices absent. */
+function prodPrices(prod){
+  if(!prod) return {};
+  if(!prod.prices){
+    prod.prices={};
+    const legacy={mecano:prod.pMecano,semi:prod.pSemi,distributeur:prod.pDistrib,consommateur:prod.pConso};
+    Object.entries(legacy).forEach(([k,v])=>{ if(v!=null) prod.prices[k]=+v||0; });
+  }
+  return prod.prices;
+}
+const getP = (prod,type) => {
+  if(!prod) return 0;
+  const pr=prodPrices(prod);
+  if(pr[type]!=null && pr[type]!=='') return +pr[type]||0;
+  if(pr.consommateur!=null) return +pr.consommateur||0;          // repli historique
+  const vals=Object.values(pr).map(Number).filter(v=>v>0);       // sinon 1er prix défini
+  return vals.length?vals[0]:0;
+};
 const hexRgba = (h,a) => { const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16); return `rgba(${r},${g},${b},${a})`; };
 
 // Helper : synchronise DB.nextId vers _storageData puis sauvegarde
@@ -147,7 +165,8 @@ function openModal(id) {
   if(id==='modalProduit' && !editingProdId) {
     // Création : titre + champs vierges (sinon les valeurs d'une édition précédente persistent)
     const t=document.getElementById('prodModalTitle'); if(t) t.textContent='Nouveau produit';
-    ['pName','pCond','pMecano','pSemi','pDistrib','pConso','pUnit','pAlerte'].forEach(x=>document.getElementById(x).value='');
+    ['pName','pCond','pUnit','pAlerte'].forEach(x=>document.getElementById(x).value='');
+    renderProductPriceFields({});
     document.getElementById('pStock').value='0';
     clearProductPhoto();
   }
@@ -191,9 +210,21 @@ function getCurrentWeekRange() {
 let dashPriceType='consommateur';
 function setDashPriceType(type,el) {
   dashPriceType=type;
-  document.querySelectorAll('[id^="dpill-"]').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('#dashPriceTypePills .period-pill').forEach(x=>x.classList.remove('active'));
   if(el) el.classList.add('active');
   renderProductBanner();
+}
+/** (Re)génère les pills « Afficher prix » du dashboard à partir des types de prix. */
+function renderDashPills() {
+  const wrap=document.getElementById('dashPriceTypePills');
+  if(!wrap) return;
+  const types=window.DB.priceTypes||[];
+  // Si le type courant n'existe plus, replie sur consommateur ou le 1er disponible
+  if(!types.some(t=>t.key===dashPriceType)) dashPriceType=(types.find(t=>t.key==='consommateur')||types[0]||{}).key||'consommateur';
+  wrap.innerHTML=types.map(t=>{
+    const lbl=t.label.replace(/^prix\s+/i,'').trim();
+    return `<div class="period-pill${t.key===dashPriceType?' active':''}" onclick="setDashPriceType('${t.key}',this)">${lbl}</div>`;
+  }).join('');
 }
 function getTodayISO() { return new Date().toISOString().slice(0,10); }
 function refreshDashboard() {
@@ -240,10 +271,9 @@ function renderProductBanner() {
   const b=document.getElementById('productBanner');
   if(!b) return;
   const pt=dashPriceType||'consommateur';
-  const priceKey={client:'pc',mecanicien:'pm',grossiste:'pg'}[pt]||'pc';
   b.innerHTML=window.DB.produits.filter(p=>p.name!=='Reglement client').map(p=>{
     const sc=p.stock===0?'dot-red':p.stock<=p.alerte?'dot-orange':'dot-green';
-    const price=p[priceKey]||0;
+    const price=getP(p,pt);
     const icon=p.photo
       ? `<img src="${p.photo}" alt="" class="pc-icon" style="width:40px;height:40px;border-radius:8px;object-fit:cover">`
       : `<span class="pc-icon">&#128722;</span>`;
@@ -388,7 +418,7 @@ function fillPrice() {
     const price=getP(prod,pt);
     document.getElementById('vUnitPrice').value=price||'';
     document.getElementById('vUnitHint').textContent=(prod.cond?'Unite: '+prod.cond+' — ':'')+'Stock dispo: '+(prod.stock||0);
-    document.getElementById('vPriceHint').textContent=`Méc:${fmt(prod.pMecano)} | S-D:${fmt(prod.pSemi)} | Dist:${fmt(prod.pDistrib)} | Conso:${fmt(prod.pConso)}`;
+    document.getElementById('vPriceHint').textContent=(window.DB.priceTypes||[]).map(t=>`${t.label.replace(/^prix\s+/i,'').trim()}:${fmt(getP(prod,t.key))}`).join(' | ');
   } else {
     document.getElementById('vUnitHint').textContent='';
     document.getElementById('vPriceHint').textContent='';
@@ -773,6 +803,41 @@ function fillTypeSelectors() {
   setOpts('vPriceType',window.DB.priceTypes);
   const st=document.getElementById('statType');
   if(st){const cur=st.value; st.innerHTML='<option value="">Tous</option>'+window.DB.priceTypes.map(t=>`<option value="${t.key}">${t.label}</option>`).join(''); if(cur)st.value=cur;}
+  syncPriceLabels();
+}
+
+/** Répercute tout changement des types de prix (ajout/renommage/suppression) sur l'UI :
+ *  pills du dashboard, colonnes du tableau produits, et champs du formulaire produit s'il est ouvert. */
+function syncPriceLabels() {
+  if(typeof renderDashPills==='function') renderDashPills();
+  if(document.getElementById('prodBody')) renderProduits();
+  const pm=document.getElementById('modalProduit');
+  if(pm && pm.classList.contains('open')) renderProductPriceFields(readProductPriceInputs());
+  if(typeof renderProductBanner==='function') renderProductBanner();
+}
+
+/** Génère les champs de prix du formulaire produit, un par type de prix.
+ *  @param {Object} prices map {cleType: montant} pour pré-remplir (édition). */
+function renderProductPriceFields(prices) {
+  const wrap=document.getElementById('prodPriceFields');
+  if(!wrap) return;
+  prices=prices||{};
+  wrap.innerHTML=(window.DB.priceTypes||[]).map(t=>{
+    const v=(prices[t.key]!=null && prices[t.key]!=='')?prices[t.key]:'';
+    const req=t.key==='consommateur'?' <span class="req">*</span>':'';
+    return `<div class="form-group" style="margin-bottom:0">
+      <label class="lbl" style="min-height:30px;line-height:1.25;display:flex;align-items:flex-end" title="${t.label}">${t.label} (XOF)${req}</label>
+      <input type="number" class="prodPriceInput" data-pkey="${t.key}" value="${v}" placeholder="0"></div>`;
+  }).join('');
+}
+
+/** Lit les champs de prix saisis dans le formulaire produit → map {cleType: montant}. */
+function readProductPriceInputs() {
+  const out={};
+  document.querySelectorAll('#prodPriceFields .prodPriceInput').forEach(inp=>{
+    const v=inp.value; if(v!=='') out[inp.dataset.pkey]=parseFloat(v)||0;
+  });
+  return out;
 }
 
 // ---- CRUD des types ----
@@ -890,15 +955,18 @@ function clearProductPhoto() {
 /** SAVE PRODUIT — CREATE ou UPDATE + persistance JSON */
 function saveProduit() {
   const name=document.getElementById('pName').value;
-  const pConso=parseFloat(document.getElementById('pConso').value)||0;
-  if(!name||!pConso){toast('Nom et prix consommateur obligatoires','error');return;}
+  const prices=readProductPriceInputs();
+  const hasPrice=Object.values(prices).some(v=>v>0);
+  if(!name||!hasPrice){toast('Nom et au moins un prix obligatoires','error');return;}
   const fields={
     name,
     cond:document.getElementById('pCond').value,
-    pMecano:parseFloat(document.getElementById('pMecano').value)||0,
-    pSemi:parseFloat(document.getElementById('pSemi').value)||0,
-    pDistrib:parseFloat(document.getElementById('pDistrib').value)||0,
-    pConso,
+    prices,
+    // Compat : on conserve aussi les anciens champs fixes pour les exports/lectures externes
+    pMecano:prices.mecano||0,
+    pSemi:prices.semi||0,
+    pDistrib:prices.distributeur||0,
+    pConso:prices.consommateur||0,
     unit:document.getElementById('pUnit').value,
     stock:parseInt(document.getElementById('pStock').value)||0,
     alerte:parseInt(document.getElementById('pAlerte').value)||0,
@@ -942,10 +1010,7 @@ function editProduit(id) {
   const t=document.getElementById('prodModalTitle'); if(t) t.textContent='Modifier le produit';
   document.getElementById('pName').value=p.name||'';
   document.getElementById('pCond').value=p.cond||'';
-  document.getElementById('pMecano').value=p.pMecano||'';
-  document.getElementById('pSemi').value=p.pSemi||'';
-  document.getElementById('pDistrib').value=p.pDistrib||'';
-  document.getElementById('pConso').value=p.pConso||'';
+  renderProductPriceFields(prodPrices(p));
   document.getElementById('pUnit').value=p.unit||'';
   document.getElementById('pStock').value=p.stock||0;
   document.getElementById('pAlerte').value=p.alerte||0;
@@ -964,12 +1029,22 @@ function deleteProduit(id) {
 }
 
 function renderProduits() {
-  document.getElementById('prodBody').innerHTML=window.DB.produits.map(p=>{
+  const body=document.getElementById('prodBody');
+  if(!body || !window.DB || !window.DB.produits) return;
+  const types=window.DB.priceTypes||[];
+  // En-tête dynamique : une colonne de prix par type
+  const head=document.getElementById('prodHead');
+  if(head){
+    const priceCols=types.map(t=>`<th class="text-right">${t.label.replace(/^prix\s+/i,'').trim()}</th>`).join('');
+    head.innerHTML=`<tr><th>Produit</th><th>Conditionnement</th>${priceCols}<th>Stock</th><th class="text-center">Actions</th></tr>`;
+  }
+  body.innerHTML=window.DB.produits.map(p=>{
     const sb=p.stock===0?`<span class="dot dot-red" style="margin-right:4px"></span>Rupture`:p.stock<=p.alerte?`<span class="dot dot-orange" style="margin-right:4px"></span>Faible (${p.stock})`:`<span class="dot dot-green" style="margin-right:4px"></span>En stock (${p.stock})`;
     const av=p.photo
       ? `<img src="${p.photo}" alt="" style="width:34px;height:34px;border-radius:8px;object-fit:cover">`
       : `<span style="width:34px;height:34px;border-radius:8px;background:var(--bg3);display:inline-flex;align-items:center;justify-content:center;color:var(--text3)"><i class="ti ti-droplet"></i></span>`;
-    return`<tr><td><span style="display:inline-flex;align-items:center;gap:8px">${av}<strong style="cursor:pointer;color:var(--primary)" onclick="showStockChart(${p.id})" title="Voir l'évolution du stock">${p.name}</strong></span></td><td>${p.cond||'--'}</td><td class="text-right num">${fmt(p.pMecano)}</td><td class="text-right num">${fmt(p.pSemi)}</td><td class="text-right num">${fmt(p.pDistrib)}</td><td class="text-right num">${fmt(p.pConso)}</td><td style="font-size:12px">${sb}</td><td class="text-center" style="white-space:nowrap"><button class="btn btn-xs" onclick="editProduit(${p.id})" title="Modifier le produit"><i class="ti ti-edit"></i></button><button class="btn btn-xs" onclick="showStockChart(${p.id})" title="Évolution du stock"><i class="ti ti-chart-line"></i></button><button class="btn btn-xs" onclick="openReassort(${p.id})" title="Réapprovisionner / ajuster le stock"><i class="ti ti-package"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteProduit(${p.id})"><i class="ti ti-trash"></i></button></td></tr>`;
+    const priceCells=types.map(t=>`<td class="text-right num">${fmt(getP(p,t.key))}</td>`).join('');
+    return`<tr><td><span style="display:inline-flex;align-items:center;gap:8px">${av}<strong style="cursor:pointer;color:var(--primary)" onclick="showStockChart(${p.id})" title="Voir l'évolution du stock">${p.name}</strong></span></td><td>${p.cond||'--'}</td>${priceCells}<td style="font-size:12px">${sb}</td><td class="text-center" style="white-space:nowrap"><button class="btn btn-xs" onclick="editProduit(${p.id})" title="Modifier le produit"><i class="ti ti-edit"></i></button><button class="btn btn-xs" onclick="showStockChart(${p.id})" title="Évolution du stock"><i class="ti ti-chart-line"></i></button><button class="btn btn-xs" onclick="openReassort(${p.id})" title="Réapprovisionner / ajuster le stock"><i class="ti ti-package"></i></button><button class="btn btn-xs btn-danger-outline" onclick="deleteProduit(${p.id})"><i class="ti ti-trash"></i></button></td></tr>`;
   }).join('');
 }
 
